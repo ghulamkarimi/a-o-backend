@@ -1,0 +1,68 @@
+#### create Car Buy
+POST http://localhost:5000/buy/create
+Content-Type: application/json
+
+{
+    "carTitle": "Audi A6",
+    "carPrice": "12000",
+    "carImage": ["image1_url.jpg", "image2_url.jpg"],
+    "carCategory": "Kombi",
+    "carDescription": "A well-maintained Audi A6 with full service history.",
+    "carKilometers": "298899",
+    "carColor": "Black",
+    "carAirConditioning": true,
+    "carSeat": "5",
+    "carNavigation": true,
+    "carParkAssist": true,
+    "carAccidentFree": true,
+    "carFirstRegistrationDay": "2010-05-01",
+    "carGearbox": "Automatic",
+    "carMotor": "4.0L",
+    "carHorsePower": "579",
+    "carTechnicalInspection": "2024-10-01",
+    "userId": "670b044f9630e5a6dac49dea"
+}
+
+#### get all Car Buy
+GET http://localhost:5000/buy/allBuys
+Content-Type: application/json
+
+
+#### get Car Buy by id
+GET http://localhost:5000/buy/carBuy/671828ddbb11964cb632b83c
+Content-Type: application/json
+
+#### update Car Buy
+DELETE http://localhost:5000/buy/delete
+Content-Type: application/json
+
+{
+    "carId": "671828ddbb11964cb632b83c",
+    "userId": "670b044f9630e5a6dac49dea"
+}
+
+#### update Car Buy
+PUT http://localhost:5000/buy/update
+Content-Type: application/json
+
+{
+    "carId": "67182911bb11964cb632b83f",
+    "userId": "670b044f9630e5a6dac49dea",
+    "carTitle": "Audi A6",
+    "carPrice": "12000",
+    "carImage": ["image1_url.jpg", "image2_url.jpg"],
+    "carCategory": "Kombi",
+    "carDescription": "A well-maintained Audi A6 with full service history.",
+    "carKilometers": "298899",
+    "carColor": "Black",
+    "carAirConditioning": true,
+    "carSeat": "5",
+    "carNavigation": true,
+    "carParkAssist": true,
+    "carAccidentFree": true,
+    "carFirstRegistrationDay": "2010-05-01",
+    "carGearbox": "Automatic",
+    "carMotor": "2.0L",
+    "carHorsePower": "579",
+    "carTechnicalInspection": "2024-10-01"
+}

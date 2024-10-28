@@ -1,0 +1,112 @@
+#### register User
+POST http://localhost:5000/user/register
+Content-Type: application/json
+
+{
+    "firstName":"omran",
+    "lastName":"ahmadi",
+    "email":"autoservice1155.aundo@gmail.com",
+    "password":"amir.12",
+    "confirmPassword":"amir.12",
+    "phone":"1234567" 
+}
+
+#### login User
+POST http://localhost:5000/user/login
+Content-Type: application/json
+
+{
+    "email":"autoservice1155.aundo@gmail.com",
+    "password":"amir.12"
+}    
+
+#### logout user
+DELETE http://localhost:5000/user/logout
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzA4NGM3OWUyYzAwY2EwNjk3NDM1MDUiLCJmaXJzdE5hbWUiOiJhbWlyIiwibGFzdE5hbWUiOiJha3JhbWkiLCJlbWFpbCI6ImFtaXJAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6ZmFsc2UsImlhdCI6MTcyODYwMzI3NSwiZXhwIjoxNzMxMTk1Mjc1fQ._pTqqlr9dzSoFYo7N4RWnjYgODsEVS_38zQXoBa_S-c
+
+ 
+#### get user profile
+GET http://localhost:5000/user/allUsers
+Content-Type: application/json
+
+
+#### edit user profile
+PUT http://localhost:5000/user/update
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzBiMDQ0Zjk2MzBlNWE2ZGFjNDlkZWEiLCJmaXJzdE5hbWUiOiJhbWlyYWxpIiwibGFzdE5hbWUiOiJob3NzZWluaSIsImVtYWlsIjoiYW1nZ2dAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzI5MDk1MDMyLCJleHAiOjE3MzE2ODcwMzJ9.0t5V2eAInBmCNWhQC7obuiHY9B4r6Il914So1Kr4FMk
+Content-Type: application/json
+
+{
+    "firstName":"bahar",
+    "lastName":"ahmdi",
+    "email":"bahar@gmail.com",
+    "password":"bahar.2020",
+    "confirmPassword":"bahar.2020",
+    "phone":"1234567" 
+}
+
+#### delete user
+DELETE http://localhost:5000/user/deleteUser/670869c8582228e388748057
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzBiMDQ0Zjk2MzBlNWE2ZGFjNDlkZWEiLCJmaXJzdE5hbWUiOiJhbWlyYWxpIiwibGFzdE5hbWUiOiJob3NzZWluaSIsImVtYWlsIjoiYW1nZ2dAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzI4Nzc1NjgxLCJleHAiOjE3MzEzNjc2ODF9.yN-TfqPKGdyj5UlwZE3E_UOlbI83_WArxBLGxkSf_tU
+
+#### change password user by logged in user
+PUT http://localhost:5000/user/changePassword
+Authorization : Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzBiMDQ0Zjk2MzBlNWE2ZGFjNDlkZWEiLCJmaXJzdE5hbWUiOiJhbWlyYWxpIiwibGFzdE5hbWUiOiJob3NzZWluaSIsImVtYWlsIjoiYW1nZ2dAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzI4Nzc2ODUwLCJleHAiOjE3MzEzNjg4NTB9.gitXR8BNMU-hcKdl6BgwifaW-eeaBCLG9SyR-WuxSy0
+Content-Type: application/json
+
+{
+    "password":"amir.12",
+    "newPassword":"amir.123",
+    "confirmPassword":"amir.123"
+}
+
+#### confirm email 
+POST http://localhost:5000/user/confirmEmail
+Content-Type: application/json
+
+{
+    "email":"autoservice.aundo@gmail.com"
+}
+
+
+#### confirm verification code 
+POST http://localhost:5000/user/confirmVerificationCode
+Content-Type: application/json
+
+{
+    "email":"karimiamirhossein12@gmail.com",
+    "verificationCode":"766075"
+
+}
+
+#### Change Password With Email
+PUT http://localhost:5000/user/changePasswordWithEmail
+Content-Type: application/json
+
+{
+    "email": "karimiamirhossein12@gmail.com",
+    "newPassword": "amir.12345",
+    "confirmPassword": "amir.12345"
+}
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
