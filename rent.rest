@@ -1,5 +1,5 @@
 #### add car to rent
-POST http://localhost:5000/rent/create
+POST http://localhost:7001/rent/create
 Content-Type: application/json
 
 {
@@ -14,16 +14,16 @@ Content-Type: application/json
 }
 
 #### get Car Rents
-GET http://localhost:5000/rent/getRents
+GET http://localhost:7001/rent/getRents
 Content-Type: application/json
 
 #### get Car Rent by id
-GET http://localhost:5000/rent/getRent/670cd0850a145fdf7824a9c3
+GET http://localhost:7001/rent/getRent/670cd0850a145fdf7824a9c3
 Content-Type: application/json
 
 
 #### delete Car Rent by id
-DELETE http://localhost:5000/rent/deleteRentCar
+DELETE http://localhost:7001/rent/deleteRentCar
 Content-Type: application/json
 
 {
@@ -32,7 +32,7 @@ Content-Type: application/json
 }
 
 #### update Car Rent by id
-PUT http://localhost:5000/rent/updateRentCar
+PUT http://localhost:7001/rent/updateRentCar
 Content-Type: application/json
 
 {
@@ -48,7 +48,7 @@ Content-Type: application/json
 }
 
 #### get Car Rent by user id
-GET http://localhost:5000/rent/getRentByUser
+GET http://localhost:7001/rent/getRentByUser
 Content-Type: application/json
 
 {

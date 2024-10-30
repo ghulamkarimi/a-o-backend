@@ -4,18 +4,22 @@ import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 import mongoose from "mongoose";
 
 export const createBuyCar = asyncHandler(async (req, res) => {
-  console.log(req.body); // Log the request body to check the values
+  console.log(req.body);
 
   const {
     carTitle,
     carPrice,
     carImage,
     carCategory,
+    fuelType,
+    owner,
+    isSold,
     carDescription,
     carKilometers,
     carColor,
     carAirConditioning,
     carSeat,
+    damagedCar,
     carNavigation,
     carParkAssist,
     carAccidentFree,
@@ -31,21 +35,25 @@ export const createBuyCar = asyncHandler(async (req, res) => {
     const user = await checkAdmin(userId);
     const carBuy = new CarBuy({
       carTitle,
+      carCategory,
       carPrice,
+      owner,
+      isSold,
+      carFirstRegistrationDay,
       carImage,
       carDescription,
-      carCategory,
       carKilometers,
       carColor,
       carAirConditioning,
       carSeat,
+      damagedCar,
       carNavigation,
       carParkAssist,
       carAccidentFree,
-      carFirstRegistrationDay, // Ensure this is passed
       carGearbox,
       carMotor,
       carHorsePower,
+      fuelType,
       carTechnicalInspection,
       user: user._id,
     });
@@ -73,6 +81,64 @@ export const getCarBuysById = asyncHandler(async (req, res) => {
   }
 });
 
+// const deleteImageFromCloudinary = async (publicId) => {
+//   const cloudinaryUrl = `https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/destroy`;
+//   const data = {
+//     public_id: publicId,
+//     type: 'upload',
+//     invalidate: true,
+//   };
+
+//   await axios.post(cloudinaryUrl, data, {
+//     headers: {
+//       'Authorization': `Bearer YOUR_API_TOKEN`
+//     }
+//   });
+// };
+
+
+
+
+// const getPublicIdFromUrl = (url) => {
+//   const segments = url.split('/');
+//   const publicIdWithExtension = segments[segments.length - 1];
+//   return publicIdWithExtension.split('.')[0]; // Nimm nur die Public ID
+// };
+// export const deleteCarBuy = asyncHandler(async (req, res) => {
+//   const userId = req.body.userId;
+//   const carId = req.body.carId;
+
+//   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+//     res.status(400).json({ message: "Invalid User Id" });
+//     return;
+//   }
+
+//   if (!carId || !mongoose.Types.ObjectId.isValid(carId)) {
+//     res.status(400).json({ message: "Invalid Car Id" });
+//     return;
+//   }
+
+//   try {
+//     const user = await checkAdmin(req.body.userId);
+//     if (!user) {
+//       res.status(400).json({ message: "Invalid User" });
+//       return;
+//     }
+
+//     const carBuy = await CarBuy.findByIdAndDelete(carId);
+//     if (!carBuy) {
+//       res.status(400).json({ message: "Car Buy not found" });
+//       return;
+//     }
+
+//     res.json({ message: "Car Buy deleted successfully" });
+//   } catch (error) {
+//     console.log("Error in deleteCarBuy", error.message);
+//     res.status(400).json({ message: error.message });
+//   }
+// });
+
+
 export const deleteCarBuy = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   const carId = req.body.carId;
@@ -88,19 +154,29 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
   }
 
   try {
-    const user = await checkAdmin(req.body.userId);
+    const user = await checkAdmin(userId);
     if (!user) {
       res.status(400).json({ message: "Invalid User" });
       return;
     }
 
-    const carBuy = await CarBuy.findByIdAndDelete(carId);
+    const carBuy = await CarBuy.findById(carId);
     if (!carBuy) {
-      res.status(400).json({ message: "Car Buy not found" });
+      res.status(404).json({ message: "Car Buy not found" });
       return;
     }
 
-    res.json({ message: "Car Buy deleted successfully" });
+    // Lösche die Bilder aus Cloudinary
+    for (const imageUrl of carBuy.carImage) {
+      const publicId = getPublicIdFromUrl(imageUrl);
+      await deleteImageFromCloudinary(publicId);
+    }
+
+    // Ändere den Verkaufsstatus des Autos
+    carBuy.isSold = true;
+    await carBuy.save();
+
+    res.json({ message: "Car Buy sold and images deleted successfully" });
   } catch (error) {
     console.log("Error in deleteCarBuy", error.message);
     res.status(400).json({ message: error.message });
@@ -113,11 +189,15 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
     carPrice,
     carImage,
     carCategory,
+    fuelType,
+    owner,
+    isSold,
     carDescription,
     carKilometers,
     carColor,
     carAirConditioning,
     carSeat,
+    damagedCar,
     carNavigation,
     carParkAssist,
     carAccidentFree,
@@ -127,7 +207,7 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
     carHorsePower,
     carTechnicalInspection,
     userId,
-    carId,
+    carId
   } = req.body;
 
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -146,11 +226,13 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
       res.status(400).json({ message: "Invalid User" });
       return;
     }
+
     const carBuy = await CarBuy.findById(carId);
     if (!carBuy) {
       res.status(404).json({ message: "Car Buy not found" });
       return;
     }
+
     carBuy.carTitle = carTitle;
     carBuy.carPrice = carPrice;
     carBuy.carImage = carImage;
@@ -160,6 +242,7 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
     carBuy.carColor = carColor;
     carBuy.carAirConditioning = carAirConditioning;
     carBuy.carSeat = carSeat;
+    carBuy.damagedCar = damagedCar;
     carBuy.carNavigation = carNavigation;
     carBuy.carParkAssist = carParkAssist;
     carBuy.carAccidentFree = carAccidentFree;
@@ -167,13 +250,20 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
     carBuy.carGearbox = carGearbox;
     carBuy.carMotor = carMotor;
     carBuy.carHorsePower = carHorsePower;
+    carBuy.fuelType = fuelType;
+    carBuy.owner = owner;
+    carBuy.isSold = isSold;
     carBuy.carTechnicalInspection = carTechnicalInspection;
+
     const updatedCarBuy = await carBuy.save();
     res.json(updatedCarBuy);
   } catch (error) {
-    confirm.log("Error in updateCarBuy", error.message);
+    console.log("Error in updateCarBuy", error.message);
     res.status(400).json({ message: error.message });
   }
 });
+
+
+
 
 

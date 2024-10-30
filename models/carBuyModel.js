@@ -8,10 +8,19 @@ const carBuySchema = new mongoose.Schema({
   carCategory: {
     type: String,
     required: true,
+    enum: ["Transporter", "PKW", "Wohnwagen"],
   },
   carPrice: {
     type: String,
     required: true,
+  },
+  owner: {
+    type: String,
+    required: true,
+  },
+  isSold: {
+    type: Boolean,
+    default: false,
   },
   carFirstRegistrationDay: {
     type: Date,
@@ -24,7 +33,6 @@ const carBuySchema = new mongoose.Schema({
   carDescription: {
     type: String,
     required: true,
-    validate: [arrayLimit],
   },
   carKilometers: {
     type: String,
@@ -40,6 +48,10 @@ const carBuySchema = new mongoose.Schema({
   },
   carSeat: {
     type: String,
+    required: true,
+  },
+  damagedCar: {
+    type: Boolean,
     required: true,
   },
   carNavigation: {
@@ -66,24 +78,19 @@ const carBuySchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  fuelType: {
+    type: String,
+    required: true,
+  },
   carTechnicalInspection: {
     type: Date,
     required: true,
   },
-  carDescription: {
-    type: String,
-  },
-  user:{
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-}
-},
-{ timestamps: true }
-);
-
-function arrayLimit(val) {
-  return val.length <= 16;
-}
+  },
+}, { timestamps: true });
 
 const CarBuy = mongoose.model("CarBuy", carBuySchema);
 export default CarBuy;

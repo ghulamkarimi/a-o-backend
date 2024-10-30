@@ -1,57 +1,56 @@
 #### create Car Buy
-POST http://localhost:5000/buy/create
+POST http://localhost:7001/buy/create
 Content-Type: application/json
 
 {
-    "carTitle": "Audi A6",
+    "carTitle": "BMW",
     "carPrice": "12000",
     "carImage": ["image1_url.jpg", "image2_url.jpg"],
-    "carCategory": "Kombi",
+    "carCategory": "Wohnwagen",
+    "fuelType": "Diesel",
+    "owner": "First Owner",
+    "isSold": false,
     "carDescription": "A well-maintained Audi A6 with full service history.",
     "carKilometers": "298899",
     "carColor": "Black",
     "carAirConditioning": true,
     "carSeat": "5",
+    "damagedCar": false,
     "carNavigation": true,
     "carParkAssist": true,
     "carAccidentFree": true,
     "carFirstRegistrationDay": "2010-05-01",
     "carGearbox": "Automatic",
-    "carMotor": "4.0L",
-    "carHorsePower": "579",
+    "carMotor": "2.0L",
+    "carHorsePower": "150",
     "carTechnicalInspection": "2024-10-01",
-    "userId": "670b044f9630e5a6dac49dea"
+    "userId": "671c15f99e9e41fd8cee9e26"
 }
 
 #### get all Car Buy
-GET http://localhost:5000/buy/allBuys
+GET http://localhost:7001/buy/allBuys
 Content-Type: application/json
 
 
 #### get Car Buy by id
-GET http://localhost:5000/buy/carBuy/671828ddbb11964cb632b83c
+GET http://localhost:7001/buy/carBuy/671828ddbb11964cb632b83c
 Content-Type: application/json
 
 #### update Car Buy
-DELETE http://localhost:5000/buy/delete
+PUT http://localhost:7001/buy/update
 Content-Type: application/json
 
 {
-    "carId": "671828ddbb11964cb632b83c",
-    "userId": "670b044f9630e5a6dac49dea"
-}
-
-#### update Car Buy
-PUT http://localhost:5000/buy/update
-Content-Type: application/json
-
-{
-    "carId": "67182911bb11964cb632b83f",
-    "userId": "670b044f9630e5a6dac49dea",
-    "carTitle": "Audi A6",
-    "carPrice": "12000",
+    "carId": "6721882169a78e1207348d63",
+    "userId": "671c15f99e9e41fd8cee9e26",
+    "carTitle": "BMW",
+    "carPrice": "10000",
     "carImage": ["image1_url.jpg", "image2_url.jpg"],
-    "carCategory": "Kombi",
+    "carCategory": "Wohnwagen",
+    "fuelType": "Diesel",
+    "owner": "First Owner",
+    "isSold": false,
+    "damagedCar": false,
     "carDescription": "A well-maintained Audi A6 with full service history.",
     "carKilometers": "298899",
     "carColor": "Black",

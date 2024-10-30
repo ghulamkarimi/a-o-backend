@@ -1,5 +1,5 @@
 #### register User
-POST http://localhost:5000/user/register
+POST http://localhost:7001/user/register
 Content-Type: application/json
 
 {
@@ -12,7 +12,7 @@ Content-Type: application/json
 }
 
 #### login User
-POST http://localhost:5000/user/login
+POST http://localhost:7001/user/login
 Content-Type: application/json
 
 {
@@ -21,17 +21,17 @@ Content-Type: application/json
 }    
 
 #### logout user
-DELETE http://localhost:5000/user/logout
+DELETE http://localhost:7001/user/logout
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzA4NGM3OWUyYzAwY2EwNjk3NDM1MDUiLCJmaXJzdE5hbWUiOiJhbWlyIiwibGFzdE5hbWUiOiJha3JhbWkiLCJlbWFpbCI6ImFtaXJAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6ZmFsc2UsImlhdCI6MTcyODYwMzI3NSwiZXhwIjoxNzMxMTk1Mjc1fQ._pTqqlr9dzSoFYo7N4RWnjYgODsEVS_38zQXoBa_S-c
 
  
 #### get user profile
-GET http://localhost:5000/user/allUsers
+GET http://localhost:7001/user/allUsers
 Content-Type: application/json
 
 
 #### edit user profile
-PUT http://localhost:5000/user/update
+PUT http://localhost:7001/user/update
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzBiMDQ0Zjk2MzBlNWE2ZGFjNDlkZWEiLCJmaXJzdE5hbWUiOiJhbWlyYWxpIiwibGFzdE5hbWUiOiJob3NzZWluaSIsImVtYWlsIjoiYW1nZ2dAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzI5MDk1MDMyLCJleHAiOjE3MzE2ODcwMzJ9.0t5V2eAInBmCNWhQC7obuiHY9B4r6Il914So1Kr4FMk
 Content-Type: application/json
 
@@ -45,11 +45,11 @@ Content-Type: application/json
 }
 
 #### delete user
-DELETE http://localhost:5000/user/deleteUser/670869c8582228e388748057
+DELETE http://localhost:7001/user/deleteUser/670869c8582228e388748057
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzBiMDQ0Zjk2MzBlNWE2ZGFjNDlkZWEiLCJmaXJzdE5hbWUiOiJhbWlyYWxpIiwibGFzdE5hbWUiOiJob3NzZWluaSIsImVtYWlsIjoiYW1nZ2dAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzI4Nzc1NjgxLCJleHAiOjE3MzEzNjc2ODF9.yN-TfqPKGdyj5UlwZE3E_UOlbI83_WArxBLGxkSf_tU
 
 #### change password user by logged in user
-PUT http://localhost:5000/user/changePassword
+PUT http://localhost:7001/user/changePassword
 Authorization : Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzBiMDQ0Zjk2MzBlNWE2ZGFjNDlkZWEiLCJmaXJzdE5hbWUiOiJhbWlyYWxpIiwibGFzdE5hbWUiOiJob3NzZWluaSIsImVtYWlsIjoiYW1nZ2dAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzI4Nzc2ODUwLCJleHAiOjE3MzEzNjg4NTB9.gitXR8BNMU-hcKdl6BgwifaW-eeaBCLG9SyR-WuxSy0
 Content-Type: application/json
 
@@ -60,7 +60,7 @@ Content-Type: application/json
 }
 
 #### confirm email 
-POST http://localhost:5000/user/confirmEmail
+POST http://localhost:7001/user/confirmEmail
 Content-Type: application/json
 
 {
@@ -69,7 +69,7 @@ Content-Type: application/json
 
 
 #### confirm verification code 
-POST http://localhost:5000/user/confirmVerificationCode
+POST http://localhost:7001/user/confirmVerificationCode
 Content-Type: application/json
 
 {
@@ -79,7 +79,7 @@ Content-Type: application/json
 }
 
 #### Change Password With Email
-PUT http://localhost:5000/user/changePasswordWithEmail
+PUT http://localhost:7001/user/changePasswordWithEmail
 Content-Type: application/json
 
 {
