@@ -36,10 +36,29 @@
     user:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-    }
+    },
+    bookedSlots: [
+      {
+        start: {
+          type: Date,
+          required: true,
+        },
+        end: {
+          type: Date,
+          required: true,
+        },
+      },
+    ],
      },
     { timestamps: true }
      );
 
     const carRent = mongoose.model("carRent", carRentSchema);
     export default carRent;
+
+
+
+
+
+
+  

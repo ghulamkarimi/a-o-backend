@@ -28,6 +28,7 @@ export const createCarRent = asyncHandler(async (req, res) => {
     carGear,
     isBooked,
     userId,
+    bookedSlots,
   } = req.body;
 
   try {
@@ -43,6 +44,7 @@ export const createCarRent = asyncHandler(async (req, res) => {
       isBooked,
       carImage,
       user: user._id,
+      bookedSlots,
     });
     const createdCarRent = await carRent.save();
     res.status(201).json(createdCarRent);
