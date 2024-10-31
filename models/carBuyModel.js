@@ -15,7 +15,7 @@ const carBuySchema = new mongoose.Schema({
     required: true,
   },
   owner: {
-    type: String,
+    type: Number,
     required: true,
   },
   isSold: {

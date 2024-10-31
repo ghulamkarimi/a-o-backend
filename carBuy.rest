@@ -48,7 +48,7 @@ Content-Type: application/json
     "carImage": ["image1_url.jpg", "image2_url.jpg"],
     "carCategory": "Wohnwagen",
     "fuelType": "Diesel",
-    "owner": "First Owner",
+    "owner": 1,
     "isSold": false,
     "damagedCar": false,
     "carDescription": "A well-maintained Audi A6 with full service history.",
