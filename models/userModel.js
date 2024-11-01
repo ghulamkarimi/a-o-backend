@@ -26,6 +26,9 @@ const userSchema = mongoose.Schema({
     type: String,
     
   },
+  profile_photo: {
+    type: String
+  },
   accessToken: {
     type: String,
   },

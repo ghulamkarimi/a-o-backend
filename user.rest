@@ -3,11 +3,11 @@ POST http://localhost:7001/user/register
 Content-Type: application/json
 
 {
-    "firstName":"omran",
-    "lastName":"ahmadi",
-    "email":"autoservice1155.aundo@gmail.com",
-    "password":"amir.12",
-    "confirmPassword":"amir.12",
+    "firstName":"Ghulam",
+    "lastName":"Karimi",
+    "email":"karimiamirhossein12@gmail.com",
+    "password":"123456",
+    "confirmPassword":"123456",
     "phone":"1234567" 
 }
 
@@ -16,13 +16,13 @@ POST http://localhost:7001/user/login
 Content-Type: application/json
 
 {
-    "email":"autoservice1155.aundo@gmail.com",
-    "password":"amir.12"
+    "email":"karimiamirhossein12@gmail.com",
+    "password":"123456"
 }    
 
 #### logout user
 DELETE http://localhost:7001/user/logout
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzA4NGM3OWUyYzAwY2EwNjk3NDM1MDUiLCJmaXJzdE5hbWUiOiJhbWlyIiwibGFzdE5hbWUiOiJha3JhbWkiLCJlbWFpbCI6ImFtaXJAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6ZmFsc2UsImlhdCI6MTcyODYwMzI3NSwiZXhwIjoxNzMxMTk1Mjc1fQ._pTqqlr9dzSoFYo7N4RWnjYgODsEVS_38zQXoBa_S-c
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzI0Y2JmOTE0YTFjOTAzODVhYTMzOWEiLCJmaXJzdE5hbWUiOiJHaHVsYW0iLCJsYXN0TmFtZSI6IkthcmltaSIsImVtYWlsIjoia2FyaW1pYW1pcmhvc3NlaW4xMkBnbWFpbC5jb20iLCJwaG9uZSI6IjEyMzQ1NjciLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzMwNDY1NDEwLCJleHAiOjE3MzMwNTc0MTB9.G0VVEY-s9aknElxbixAvIn_KuznA7i-aV9gv9Mtc8o0
 
  
 #### get user profile

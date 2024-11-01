@@ -31,15 +31,16 @@ export const userRegister = asyncHandler(async (req, res) => {
     res.json({
       user,
       message: "User Registered Successfully",
-  });
+    });
   } catch (error) {
-    console.log(error , "error in userRegister");
+    console.log(error, "error in userRegister");
     res.json(error);
   }
 });
 
 export const userLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  console.log("Attempting to log in user with email:", email);
 
   const userFound = await User.findOne({ email });
   if (!userFound) {
@@ -52,17 +53,18 @@ export const userLogin = asyncHandler(async (req, res) => {
       lastName,
       email: userEmail,
       phone,
+      profile_photo: photo,
       isAdmin,
     } = userFound;
 
     const accessToken = jwt.sign(
-      { userId, firstName, lastName, email: userEmail, phone, isAdmin },
+      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin },
       process.env.ACCESS_TOKEN,
       { expiresIn: "30d" }
     );
 
     const refreshToken = jwt.sign(
-      { userId, firstName, lastName, email: userEmail, phone, isAdmin },
+      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin },
       process.env.REFRESH_TOKEN,
       { expiresIn: "30s" }
     );
@@ -84,7 +86,7 @@ export const userLogin = asyncHandler(async (req, res) => {
       message: "User Logged In Successfully",
       token: accessToken,
       userInfo: decoded,
-      user: user  
+      user: user,
     });
   } else {
     throw new Error("Invalid credentials");
@@ -93,28 +95,24 @@ export const userLogin = asyncHandler(async (req, res) => {
 
 export const userLogout = asyncHandler(async (req, res) => {
   const token = req.cookies.accessToken;
-  console.log("Token:", token); // Debug log
+  console.log("Token:", token);
 
-  // Check if the token is present
   if (!token) {
-    console.error("No token found"); // Log if no token
+    console.error("No token found");
     return res.status(401).json({ error: "User not logged in" });
   }
 
-  // Find the user by the access token
   const user = await User.findOne({ accessToken: token });
-  console.log("User found:", user); // Log the user found (if any)
+  console.log("User found:", user);
 
   if (!user) {
-    console.error("User not found for token:", token); // Log if user not found
+    console.error("User not found for token:", token);
     return res.status(404).json({ error: "User not found" });
   }
 
-  // Clear the access token from the user document
   user.accessToken = undefined;
   await user.save();
 
-  // Clear the cookie
   res.clearCookie("accessToken");
   res.status(200).json({
     message: "User Logged Out Successfully",
@@ -238,21 +236,24 @@ export const changePasswordWithEmail = asyncHandler(async (req, res) => {
 export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
   const { email, verificationCode } = req.body;
   const user = await User.findOne({ email });
-  
+
   if (!user) {
     throw new Error("User not found");
   }
-  if (user.verificationCode && verificationCode.toString() === user.verificationCode.toString()) {
-  user.verificationCode = "";
-  user.isAccountVerified = true;
-  await user.save();
-  console.log("Verification Code:", user.verificationCode);
+  if (
+    user.verificationCode &&
+    verificationCode.toString() === user.verificationCode.toString()
+  ) {
+    user.verificationCode = "";
+    user.isAccountVerified = true;
+    await user.save();
+    console.log("Verification Code:", user.verificationCode);
 
-  res.json({
-    message: "Email verified successfully",
-    user: user, 
-  });
+    res.json({
+      message: "Email verified successfully",
+      user: user,
+    });
   } else {
     throw new Error("Invalid verification code");
   }
-})
+});
