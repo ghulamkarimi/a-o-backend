@@ -22,9 +22,17 @@ Content-Type: application/json
 
 #### logout user
 DELETE http://localhost:7001/user/logout
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzI0Y2JmOTE0YTFjOTAzODVhYTMzOWEiLCJmaXJzdE5hbWUiOiJHaHVsYW0iLCJsYXN0TmFtZSI6IkthcmltaSIsImVtYWlsIjoia2FyaW1pYW1pcmhvc3NlaW4xMkBnbWFpbC5jb20iLCJwaG9uZSI6IjEyMzQ1NjciLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzMwNDY1NDEwLCJleHAiOjE3MzMwNTc0MTB9.G0VVEY-s9aknElxbixAvIn_KuznA7i-aV9gv9Mtc8o0
+Authorization: Bearer 
 
  
+### Refresh User Token
+POST http://localhost:7001/user/refreshToken
+Cookie: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzI4OGExNDdmYTUxY2Q2ODBmYjFjM2MiLCJmaXJzdE5hbWUiOiJHaHVsYW0iLCJsYXN0TmFtZSI6IkthcmltaSIsImVtYWlsIjoia2FyaW1pYW1pcmhvc3NlaW4xMkBnbWFpbC5jb20iLCJwaG9uZSI6IjEyMzQ1NjciLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzMwNzEzNzM5LCJleHAiOjE3MzMzMDU3Mzl9.OaH6mNEexf_LIG4XgxRhgS6yYiloR_TbjG9Yc_tlax0
+
+
+
+
+
 #### get user profile
 GET http://localhost:7001/user/allUsers
 Content-Type: application/json

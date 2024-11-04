@@ -29,7 +29,7 @@ const userSchema = mongoose.Schema({
   profile_photo: {
     type: String
   },
-  accessToken: {
+  refreshToken: {
     type: String,
   },
   isAccountVerified:{

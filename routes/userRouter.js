@@ -10,15 +10,18 @@ import {
   confirmEmail,
   confirmEmailVerificationCode,
   changePasswordWithEmail,
+  userRefreshToken,
 } from "../controller/userController.js";
+import loginLimiter from "../rateLimiter.js";
 import { verifyToken } from "../middleware/token/verifyToken.js";
 
 
 const userRouter = express.Router();
 
 userRouter.post("/register", userRegister);
-userRouter.post("/login", userLogin);
+userRouter.post("/login", loginLimiter,userLogin);
 userRouter.delete("/logout", userLogout);
+userRouter.post("/refreshToken", userRefreshToken);
 userRouter.get("/allUsers", getAllUsers);
 userRouter.put("/update/", verifyToken, userEdit);
 userRouter.delete("/deleteUser/:id", verifyToken, deleteAccount);
