@@ -4,6 +4,7 @@ import { dbConnect } from './dbConnect/dbConnect.js';
 import userRouter from './routes/userRouter.js';
 import carRentRouter from './routes/carRentRouter.js'; 
 import carBuyRouter from './routes/carBuyRouter.js';
+import offerRouter from './routes/offerRouter.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -28,6 +29,7 @@ app.use(bodyParser.json());
 app.use('/user', userRouter);
 app.use("/rent", carRentRouter);
 app.use("/buy", carBuyRouter);
+app.use("/offer", offerRouter);
 
 const PORT = process.env.PORT || 5001;
 

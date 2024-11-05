@@ -1,0 +1,37 @@
+#### created Offer
+POST http://localhost:7001/offer/createOffer
+Content-Type: application/json
+
+{
+    "title": "car1",
+    "description": "description",
+    "price":"100",
+    "imageUrl":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
+    "userId": "6728c1b4b847d4c2fd433414"
+}
+
+#### edit Offer
+PUT http://localhost:7001/offer/editOffer
+Content-Type: application/json
+
+{
+    "offerId": "672a0ee7c2eab969d96bd2dc",
+    "title": "Öl wechseln bei uns",
+    "description": "discription für öl wechseln",
+    "price":"80",
+    "imageUrl":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
+    "userId": "6728c1b4b847d4c2fd433414"
+}
+
+#### delete Offer
+DELETE http://localhost:7001/offer/deleteOffer
+Content-Type: application/json
+
+{
+    "offerId": "672a05ec831f318888ecc13f",
+    "userId": "6728c1b4b847d4c2fd433414"
+}
+
+#### get all Offers
+GET http://localhost:7001/offer/getOffers
+Content-Type: application/json

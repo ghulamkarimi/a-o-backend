@@ -22,6 +22,10 @@ const carBuySchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  carEuroNorm: {
+    type: String,
+    required: true,
+  },
   carFirstRegistrationDay: {
     type: Date,
     required: true,
@@ -29,6 +33,12 @@ const carBuySchema = new mongoose.Schema({
   carImage: {
     type: [String],
     required: true,
+    validate: {
+      validator: function(value) {
+        return value.length <= 10;
+      },
+      message: "Es können maximal 10 Bilder gespeichert werden."
+    }
   },
   carDescription: {
     type: String,

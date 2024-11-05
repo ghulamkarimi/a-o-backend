@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import CarBuy from "../models/carBuyModel.js";
 import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 import mongoose from "mongoose";
+import { getPublicIdFromUrl } from "../utils/getPublicIdFormUrl.js";
 
 export const createBuyCar = asyncHandler(async (req, res) => {
   console.log(req.body);
@@ -19,6 +20,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
     carColor,
     carAirConditioning,
     carSeat,
+    carEuroNorm,
     damagedCar,
     carNavigation,
     carParkAssist,
@@ -52,6 +54,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
       carAccidentFree,
       carGearbox,
       carMotor,
+      carEuroNorm,
       carHorsePower,
       fuelType,
       carTechnicalInspection,
@@ -70,16 +73,6 @@ export const getCarBuys = asyncHandler(async (req, res) => {
   res.json(carBuys);
 });
 
-export const getCarBuysById = asyncHandler(async (req, res) => {
-  const carBuy = await CarBuy.findById(req.params.id);
-  console.log(carBuy);
-  if (carBuy) {
-    res.json(carBuy);
-  } else {
-    res.status(404);
-    throw new Error("Car Buy not found");
-  }
-});
 
 // const deleteImageFromCloudinary = async (publicId) => {
 //   const cloudinaryUrl = `https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/destroy`;
@@ -139,6 +132,10 @@ export const getCarBuysById = asyncHandler(async (req, res) => {
 // });
 
 
+// Hilfsfunktion zum Extrahieren der publicId aus der Bild-URL
+ 
+
+// deleteCarBuy-Funktion
 export const deleteCarBuy = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   const carId = req.body.carId;
@@ -160,17 +157,23 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
       return;
     }
 
+    // Überprüfe, ob der Benutzer Adminrechte hat
+    if (!user.isAdmin) {
+      res.status(403).json({ message: "Not authorized to delete car buy" });
+      return;
+    }
+
     const carBuy = await CarBuy.findById(carId);
     if (!carBuy) {
       res.status(404).json({ message: "Car Buy not found" });
       return;
     }
 
-    // Lösche die Bilder aus Cloudinary
-    for (const imageUrl of carBuy.carImage) {
-      const publicId = getPublicIdFromUrl(imageUrl);
-      await deleteImageFromCloudinary(publicId);
-    }
+    // // Lösche die Bilder aus Cloudinary
+    // for (const imageUrl of carBuy.carImage) {
+    //   const publicId = getPublicIdFromUrl(imageUrl);
+    //   await deleteImageFromCloudinary(publicId);
+    // }
 
     // Ändere den Verkaufsstatus des Autos
     carBuy.isSold = true;
@@ -183,6 +186,8 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
   }
 });
 
+
+
 export const updateCarBuy = asyncHandler(async (req, res) => {
   const {
     carTitle,
@@ -190,6 +195,7 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
     carImage,
     carCategory,
     fuelType,
+    carEuroNorm,
     owner,
     isSold,
     carDescription,
@@ -242,6 +248,7 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
     carBuy.carColor = carColor;
     carBuy.carAirConditioning = carAirConditioning;
     carBuy.carSeat = carSeat;
+    carEuroNorm = carEuroNorm;
     carBuy.damagedCar = damagedCar;
     carBuy.carNavigation = carNavigation;
     carBuy.carParkAssist = carParkAssist;

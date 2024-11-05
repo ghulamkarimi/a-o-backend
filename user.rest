@@ -22,7 +22,7 @@ Content-Type: application/json
 
 #### logout user
 DELETE http://localhost:7001/user/logout
-Authorization: Bearer 
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzI4YzFiNGI4NDdkNGMyZmQ0MzM0MTQiLCJmaXJzdE5hbWUiOiJHaHVsYW0iLCJsYXN0TmFtZSI6IkthcmltaSIsImVtYWlsIjoia2FyaW1pYW1pcmhvc3NlaW4xMkBnbWFpbC5jb20iLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzMwNzMyODM4LCJleHAiOjE3MzMzMjQ4Mzh9.jpKGRQwoUDaPhCvYfIEdjwyNZO1QTz9KW0oAMmC0VKo
 
  
 ### Refresh User Token
