@@ -3,10 +3,10 @@ POST http://localhost:7001/offer/createOffer
 Content-Type: application/json
 
 {
-    "title": "car1",
+    "title": "Reifen wechseln bei uns",
     "description": "description",
-    "oldPrice":"100",
-    "newPrice":"80",
+    "oldPrice":"120",
+    "newPrice":"75",
     "imageUrl":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
     "userId": "6728c1b4b847d4c2fd433414"
 }
@@ -16,14 +16,15 @@ PUT http://localhost:7001/offer/editOffer
 Content-Type: application/json
 
 {
-    "offerId": "672a1795833032ec70fc06e8",
+    "offerId": "672a78a02ed646d3bb02e296",
     "title": "Öl wechseln bei uns",
-    "description": "discription für öl wechseln",
-    "oldPrice":"100",
-    "newPrice":"80",
-    "imageUrl":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
+    "description": "Profitieren Sie von unserem schnellen und zuverlässigen Ölwechsel-Service.",
+    "oldPrice": "165",
+    "newPrice": "130",
+    "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
     "userId": "6728c1b4b847d4c2fd433414"
 }
+
 
 #### delete Offer
 DELETE http://localhost:7001/offer/deleteOffer

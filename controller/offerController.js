@@ -27,7 +27,7 @@ export const getOffers = asyncHandler(async(req,res)=> {
 });
 
 export const editOffer = asyncHandler(async(req,res)=> {
-    const {title,description,oldPrice,newPrice,imageUrl,userId,offerId} = req.body
+    const {title,description,oldPrice,newPrice,imageUrl,userId,offerId,discountPercentage} = req.body
     if(!offerId){
         res.status(400)
         throw new Error("invalid offer id")
@@ -52,6 +52,7 @@ export const editOffer = asyncHandler(async(req,res)=> {
         offer.oldPrice = oldPrice
         offer.newPrice = newPrice
         offer.imageUrl = imageUrl
+        offer.discountPercentage = discountPercentage
         const updatedOffer = await offer.save()
         res.json(updatedOffer)
     } catch (error) {
@@ -77,7 +78,7 @@ export const deleteOffer = asyncHandler(async (req, res) => {
         throw new Error("Invalid user");
       }
   
-      // Verwende findByIdAndDelete, um das Angebot zu löschen
+     
       const offer = await Offer.findByIdAndDelete(offerId);
       if (!offer) {
         res.status(404);
@@ -87,7 +88,7 @@ export const deleteOffer = asyncHandler(async (req, res) => {
       res.json({ message: "Offer deleted" });
     } catch (error) {
       console.log("Error in delete", error);
-      res.status(500).json({ message: "Internal Server Error" }); // Füge eine Fehlerantwort hinzu
+      res.status(500).json({ message: "Internal Server Error" });
     }
   });
   

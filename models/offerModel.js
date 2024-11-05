@@ -17,17 +17,31 @@ const offerSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    discountPercentage: { 
+        type: Number,
+        default: 0,
+    },
     imageUrl: {
         type: String,
         required: true,
     },
-    userId : {
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     }
+});
 
-})
+
+offerSchema.pre('save', function(next) {
+    if (this.oldPrice && this.newPrice && this.oldPrice > this.newPrice) {
+        const discount = ((this.oldPrice - this.newPrice) / this.oldPrice) * 100;
+        this.discountPercentage = Math.round(discount); 
+    } else {
+        this.discountPercentage = 0; 
+    }
+    next();
+});
 
 const Offer = mongoose.model('Offer', offerSchema);
 export default Offer;
