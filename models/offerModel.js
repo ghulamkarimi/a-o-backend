@@ -9,7 +9,11 @@ const offerSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    price: {
+    oldPrice: {
+        type: Number,
+        required: true,
+    },
+    newPrice: {
         type: Number,
         required: true,
     },

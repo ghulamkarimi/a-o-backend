@@ -5,7 +5,8 @@ Content-Type: application/json
 {
     "title": "car1",
     "description": "description",
-    "price":"100",
+    "oldPrice":"100",
+    "newPrice":"80",
     "imageUrl":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
     "userId": "6728c1b4b847d4c2fd433414"
 }
@@ -15,10 +16,11 @@ PUT http://localhost:7001/offer/editOffer
 Content-Type: application/json
 
 {
-    "offerId": "672a0ee7c2eab969d96bd2dc",
+    "offerId": "672a1795833032ec70fc06e8",
     "title": "Öl wechseln bei uns",
     "description": "discription für öl wechseln",
-    "price":"80",
+    "oldPrice":"100",
+    "newPrice":"80",
     "imageUrl":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
     "userId": "6728c1b4b847d4c2fd433414"
 }

@@ -3,13 +3,14 @@ import Offer from '../models/offerModel.js'
 import { checkAdmin } from '../middleware/validator/checkAdmin.js'
 
 export const createOffer = asyncHandler(async(req,res)=> {
-    const {title,description,price,imageUrl,userId} = req.body
+    const {title,description,oldPrice,newPrice,imageUrl,userId} = req.body
     try {
         const user = await checkAdmin(userId)
         const offer = await Offer({
             title,
             description,
-            price,
+            oldPrice,
+            newPrice,
             imageUrl,
             userId: user._id
         })
@@ -26,7 +27,7 @@ export const getOffers = asyncHandler(async(req,res)=> {
 });
 
 export const editOffer = asyncHandler(async(req,res)=> {
-    const {title,description,price,imageUrl,userId,offerId} = req.body
+    const {title,description,oldPrice,newPrice,imageUrl,userId,offerId} = req.body
     if(!offerId){
         res.status(400)
         throw new Error("invalid offer id")
@@ -48,7 +49,8 @@ export const editOffer = asyncHandler(async(req,res)=> {
         }
         offer.title = title
         offer.description = description
-        offer.price = price
+        offer.oldPrice = oldPrice
+        offer.newPrice = newPrice
         offer.imageUrl = imageUrl
         const updatedOffer = await offer.save()
         res.json(updatedOffer)
