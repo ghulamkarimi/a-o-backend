@@ -1,6 +1,7 @@
- import mongoose from "mongoose";
+import mongoose from "mongoose";
 
- const carRentSchema = mongoose.Schema({
+const carRentSchema = mongoose.Schema(
+  {
     carName: {
       type: String,
       required: true,
@@ -9,19 +10,19 @@
       type: String,
       required: true,
     },
-    carAC:{
+    carAC: {
       type: Boolean,
       required: true,
     },
-    carGear:{
+    carGear: {
       type: String,
       required: true,
     },
-    carPrice:{
+    carPrice: {
       type: String,
       required: true,
     },
-    carDoors:{
+    carDoors: {
       type: String,
       required: true,
     },
@@ -33,32 +34,31 @@
       type: Boolean,
       default: false,
     },
-    user:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     bookedSlots: [
       {
         start: {
           type: Date,
-          required: true,
         },
         end: {
           type: Date,
-          required: true,
         },
       },
     ],
-     },
-    { timestamps: true }
-     );
+  },
+  { timestamps: true }
+);
 
-    const carRent = mongoose.model("carRent", carRentSchema);
-    export default carRent;
+carRentSchema.path("bookedSlots").validate(function (value) {
+  if (this.isBooked) {
+    return value && value.length > 0;
+  } else {
+    return true;
+  }
+});
 
-
-
-
-
-
-  
+const carRent = mongoose.model("carRent", carRentSchema);
+export default carRent;
