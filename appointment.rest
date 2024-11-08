@@ -1,0 +1,17 @@
+#### email 
+POST http://localhost:7001/appointment
+Content-Type: application/json
+
+{
+    "service": "sonstiges",
+    "date": "2024-08-11",
+    "fullName": "Ghulam Karimi",
+    "email": "karimiamirhossein12@gmail.com",
+    "phone": "1707407417",
+    "notes": "Ich habe ein Problem mit meinem Auto",
+    "licensePlate": "KH F 2020"
+
+}
+#### termin bestätigen
+PATCH http://localhost:7001/appointment/672d60fcf38f5bc0840dc9db/confirm
+Content-Type: application/json
