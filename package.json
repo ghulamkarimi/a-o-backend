@@ -25,6 +25,7 @@
     "express-async-handler": "^1.2.0",
     "express-rate-limit": "^7.4.1",
     "express-validator": "^7.2.0",
+    "googleapis": "^144.0.0",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "mongoose": "^8.7.0",

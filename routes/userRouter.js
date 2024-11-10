@@ -12,7 +12,7 @@ import {
   changePasswordWithEmail,
   userRefreshToken,
 } from "../controller/userController.js";
-import loginLimiter from "../rateLimiter.js";
+import loginLimiter from "../rateLimit/rateLimiter.js";
 import { verifyToken } from "../middleware/token/verifyToken.js";
 
 
