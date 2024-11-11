@@ -32,6 +32,21 @@ export const createCarRent = asyncHandler(async (req, res) => {
   } = req.body;
 
   try {
+
+    const rentalDays = bookedSlots.reduce((totalDays, slot) => {
+      const startDate = new Date(slot.start);
+      const endDate = new Date(slot.end);
+      const diffInTime = endDate.getTime() - startDate.getTime();
+      const diffInDays = diffInTime / (1000 * 3600 * 24); // Umrechnung von Millisekunden in Tage
+      return totalDays + diffInDays;
+    }, 0);
+
+    const totalPrice = rentalDays * parseFloat(carPrice); // carPrice sollte eine Zahl sein
+
+    if (rentalDays < 1) {
+      rentalDays = 1;
+     
+    }
     const user = await checkAdmin(userId);
     const carRent = new CarRent({
       carName,
@@ -45,6 +60,7 @@ export const createCarRent = asyncHandler(async (req, res) => {
       carImage,
       user: user._id,
       bookedSlots,
+      totalPrice,
     });
     const createdCarRent = await carRent.save();
     res.status(201).json(createdCarRent);

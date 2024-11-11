@@ -22,6 +22,10 @@ const carRentSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    totalPrice: { 
+      type: Number,  
+      required: false,
+    },
     carDoors: {
       type: String,
       required: true,
