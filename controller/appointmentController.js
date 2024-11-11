@@ -2,11 +2,13 @@ import asyncHandler from "express-async-handler";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import Appointment from "../models/appointmentModel.js";
+import mongoose from "mongoose";
+import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 dotenv.config();
 
-
 export const createAppointment = asyncHandler(async (req, res) => {
-  const { service, fullName, email, phone, date, licensePlate, notes } = req.body;
+  const { service, fullName, email, phone, date, licensePlate, notes } =
+    req.body;
 
   const appointment = await Appointment.create({
     service,
@@ -74,9 +76,10 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
   await transporter.sendMail(mailOptions);
 
-  res.status(201).json({ message: "Termin erfolgreich erstellt und Admin benachrichtigt." });
+  res
+    .status(201)
+    .json({ message: "Termin erfolgreich erstellt und Admin benachrichtigt." });
 });
-
 
 export const confirmAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -85,13 +88,13 @@ export const confirmAppointment = asyncHandler(async (req, res) => {
     if (!appointment) {
       return res.status(404).json({ message: "Termin nicht gefunden." });
     }
-   
+
     const updatedAppointment = await Appointment.findByIdAndUpdate(
       id,
       { status: "confirmed" },
       { new: true, runValidators: true }
     );
-    
+
     const formattedDate = new Date(updatedAppointment.date).toLocaleString(
       "de-DE",
       {
@@ -190,4 +193,47 @@ export const showConfirmationPage = asyncHandler(async (req, res) => {
         </body>
       </html>
     `);
+});
+
+export const getAllAppointments = asyncHandler(async (req, res) => {
+  const appointments = await Appointment.find();
+  res.json(appointments);
+});
+
+export const deleteAppointment = asyncHandler(async (req, res) => {
+  const userId = req.body.userId;
+  const appointmentId = req.body.appointmentId;
+
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: "Ungültige Benutzer-ID" });
+    return;
+  }
+  if (!appointmentId || !mongoose.Types.ObjectId.isValid(appointmentId)) {
+    res.status(400).json({ message: "Ungültige Termin-ID" });
+    return;
+  }
+  try {
+    const user = await checkAdmin(userId);
+    if (!user) {
+      res.status(400).json({ message: "Ungültiger Benutzer" });
+      return;
+    }
+
+    if (!user.isAdmin) {
+      res.status(403).json({ message: "Nicht berechtigt, Termin zu löschen" });
+      return;
+    }
+    const appointment = await Appointment.findById(
+      new mongoose.Types.ObjectId(appointmentId)
+    );
+    if (!appointment) {
+      res.status(404).json({ message: "Termin nicht gefunden" });
+      return;
+    }
+    await Appointment.findByIdAndDelete(appointmentId);
+    res.status(200).json({ message: "Termin erfolgreich gelöscht" });
+  } catch (error) {
+    
+    res.status(400).json({ message: error.message });
+  }
 });

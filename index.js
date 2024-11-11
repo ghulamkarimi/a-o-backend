@@ -6,6 +6,7 @@ import carRentRouter from './routes/carRentRouter.js';
 import carBuyRouter from './routes/carBuyRouter.js';
 import offerRouter from './routes/offerRouter.js';
 import appointmentRouter from './routes/appointmentRouter.js';
+import paymentRouter from './routes/paymentRouter.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import bodyParser from 'body-parser';
@@ -32,6 +33,7 @@ app.use("/rent", carRentRouter);
 app.use("/buy", carBuyRouter);
 app.use("/offer", offerRouter);
 app.use("/appointment", appointmentRouter);
+app.use("/payment", paymentRouter);
 
 const PORT = process.env.PORT || 5001;
 

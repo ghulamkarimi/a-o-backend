@@ -1,0 +1,16 @@
+#### createPayment
+POST http://localhost:7001/payment/createPayment
+Content-Type: application/json
+
+{
+    "totalAmount": 100,
+    "currency": "EUR",
+    "paymentMethod": "CREDIT_CARD",
+    "paymentMethodDetails": {
+        "cardNumber": "1234567890123456",
+        "cardHolderName": "John Doe",
+        "expirationDate": "12/2022",
+        "cvv": "123"
+    },
+    "customerEmail": "karimiamirhossein12@gmail.com"
+}
