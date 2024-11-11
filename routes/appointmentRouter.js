@@ -1,7 +1,7 @@
 
 import express from "express";
 import { createAppointment, confirmAppointment,showConfirmationPage } from "../controller/appointmentController.js";
-import { appointmentValidator } from "../middleware/appointmentValidator.js";
+import { appointmentValidator } from "../middleware/validator/appointmentValidator.js";
 
 
 const appointmentRouter = express.Router();

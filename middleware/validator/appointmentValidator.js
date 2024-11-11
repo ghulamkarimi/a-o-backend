@@ -2,7 +2,6 @@ import { body, validationResult } from 'express-validator';
 
 
 export const appointmentValidator = [
-  // Validierungen für alle Felder
   body('email').isEmail().withMessage('Bitte eine gültige E-Mail-Adresse eingeben'),
   body('phone').isLength({ min: 10 }).withMessage('Bitte eine gültige Telefonnummer eingeben'),
   body('service').notEmpty().withMessage('Service ist erforderlich'),
@@ -11,7 +10,6 @@ export const appointmentValidator = [
   body('licensePlate').notEmpty().withMessage('Fahrzeugkennzeichen ist erforderlich'),
   body('notes').optional().isString().withMessage('Notizen müssen Text sein'),
 
-  // Middleware zur Überprüfung der Validierung
   async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

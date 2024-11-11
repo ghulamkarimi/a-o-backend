@@ -80,8 +80,6 @@ export const createAppointment = asyncHandler(async (req, res) => {
 
 export const confirmAppointment = asyncHandler(async (req, res) => {
   const { id } = req.params;
-
-
   try {
     const appointment = await Appointment.findById(id);
     if (!appointment) {
