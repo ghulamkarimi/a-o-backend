@@ -12,13 +12,14 @@ import {
   changePasswordWithEmail,
   userRefreshToken,
 } from "../controller/userController.js";
-import loginLimiter from "../rateLimiter.js";
+import loginLimiter from "../rateLimit/rateLimiter.js";
 import { verifyToken } from "../middleware/token/verifyToken.js";
+import { userRegisterValidator } from "../middleware/validator/userValidator.js";
 
 
 const userRouter = express.Router();
 
-userRouter.post("/register", userRegister);
+userRouter.post("/register", userRegisterValidator,userRegister);
 userRouter.post("/login", loginLimiter,userLogin);
 userRouter.delete("/logout", userLogout);
 userRouter.post("/refreshToken", userRefreshToken);
