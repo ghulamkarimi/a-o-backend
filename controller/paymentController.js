@@ -1,9 +1,11 @@
-import client from "../config/paypalConfig.js";
-import asyncHandler from "express-async-handler";
 import paypal from "@paypal/checkout-server-sdk";
+import asyncHandler from "express-async-handler";
 import nodeMailer from "nodemailer";
+import Order from "../models/paymentModel.js";
+import client from "../config/paypalConfig.js";
 
-// Benachrichtigung an den Administrator senden
+
+
 const sendAdminNotification = (
   paymentStatus,
   orderId,
@@ -83,7 +85,7 @@ const sendAdminNotification = (
               <h3>Details der Bestellung:</h3>
               <p>Die Bestellung mit der ID <strong>${orderId}</strong> wurde erfolgreich durch den Kunden mit der E-Mail-Adresse <strong>${customerEmail}</strong> mit PayPal als Zahlungsmethode platziert.</p>
               
-              <p>Bitte prüfen Sie die Zahlung und den Status der Bestellung in Ihrer Paypal App.</p>
+              <p>Bitte prüfen Sie die Zahlung und den Status der Bestellung in Ihrem Admin Bereich.</p>
             </div>
             <div class="footer">
               <p>&copy; ${new Date().getFullYear()} Ihr Unternehmen - Alle Rechte vorbehalten.</p>
@@ -104,85 +106,122 @@ const sendAdminNotification = (
   });
 };
 
-// Zahlung erstellen
-// Zahlung erstellen
-// Zahlung erstellen
-export const createPayment = asyncHandler(async (req, res) => {
-  const { totalAmount, customerEmail } = req.body;
 
-  if (!customerEmail) {
-    return res.status(400).json({ message: "E-Mail-Adresse des Kunden fehlt" });
-  }
-
-  const request = new paypal.orders.OrdersCreateRequest();
-  request.requestBody({
-    intent: "CAPTURE",
-    purchase_units: [
-      {
+export const createOrder = asyncHandler(async (req, res) => {
+    // Bestellung erstellen
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.requestBody({
+      intent: "CAPTURE", // Intention der Zahlung (Zahlung erfassen)
+      purchase_units: [{
         amount: {
-          currency_code: "EUR",
-          value: totalAmount.toFixed(2),
+          currency_code: "USD",  // Währung der Zahlung
+          value: req.body.amount, // Betrag aus der Anfrage
         },
-        payee: {
-          email_address: process.env.ADMIN_PAYPAL_EMAIL, // Empfänger der Zahlung
-        },
-      },
-    ],
+      }],
+      application_context: {
+        return_url: "http://localhost:7001/payment/success",  // Erfolgs-URL
+        cancel_url: "http://localhost:7001/payment/cancel",   // Abbruch-URL
+      }
+    });
+  
+    try {
+      const order = await client.execute(request); // Bestellung ausführen
+  
+      // Genehmigungs-URL extrahieren und an den Client zurücksenden
+      const approveUrl = order.result.links.find(link => link.rel === 'approve').href;
+      res.json({ approvalUrl: approveUrl }); // URL zurücksenden, um die Zahlung zu genehmigen
+    } catch (error) {
+      console.error("Fehler beim Erstellen der Bestellung:", error);
+      res.status(500).json({ message: "Fehler beim Erstellen der Bestellung" });
+    }
   });
-
-  try {
-    const order = await client.execute(request);
-    console.log(order.result);
-
-    // Antwort wird nur einmal gesendet
-    res.json({
-      id: order.result.id,
-      status: order.result.status,
+  
+  export const createPayment = asyncHandler(async (req, res) => {
+    const { totalAmount, customerEmail, carId, userId } = req.body;
+  
+    // Überprüfen, ob die E-Mail-Adresse und andere erforderliche Felder vorhanden sind
+    if (!customerEmail || !carId || !userId) {
+      return res.status(400).json({ message: "E-Mail, Auto-ID oder Benutzer-ID fehlt" });
+    }
+  
+    // PayPal Zahlungsanforderung erstellen
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.requestBody({
+      intent: "CAPTURE",
+      purchase_units: [
+        {
+          amount: {
+            currency_code: "EUR",
+            value: totalAmount.toFixed(2),
+          },
+          payee: {
+            email_address: process.env.ADMIN_PAYPAL_EMAIL, // Admin PayPal-E-Mail-Adresse
+          },
+        },
+      ],
     });
+  
+    try {
+      // PayPal Zahlung ausführen
+      const order = await client.execute(request);
+      console.log(order.result);
+  
+      // Bestellung in der Datenbank speichern
+      const newOrder = new Order({
+        orderId: order.result.id,
+        customerEmail: customerEmail,
+        amount: totalAmount,
+        paymentStatus: order.result.status, // PayPal Status
+        paymentMethod: "PayPal", // Zahlungsmethode
+        carId: carId,  // Auto-ID (Verknüpft die Bestellung mit einem Auto)
+        userId: userId, // Benutzer-ID (Verknüpft die Bestellung mit einem Benutzer)
+      });
+  
+      // Bestellung speichern
+      await newOrder.save();
+  
+      // Erfolgreiche Antwort mit der Bestell-ID und dem Status
+      res.json({
+        id: order.result.id,
+        status: order.result.status,
+      });
+  
+      // Benachrichtigung an den Admin senden
+      sendAdminNotification(
+        order.result.status,
+        order.result.id,
+        customerEmail,
+        order
+      );
+  
+    } catch (error) {
+      console.error("Fehler bei der Erstellung der Zahlung:", error);
+      res.status(500).json({ message: "Fehler bei der Erstellung der Zahlung" });
+    }
+  });
+  
+  
 
-    // Sende Benachrichtigung an den Administrator, dass eine Zahlung angefordert wurde
-    sendAdminNotification(
-      order.result.status,
-      order.result.id,
-      customerEmail,
-      order
-    );
-  } catch (error) {
-    console.error("Fehler bei der Erstellung der Zahlung:", error);
-    res.status(500).json({ message: "Fehler bei der Erstellung der Zahlung" });
-  }
-});
-
-// Zahlung erfassen
 export const capturePayment = asyncHandler(async (req, res) => {
-  const { orderId } = req.body;
+    const { token, PayerID } = req.query; // `token` ist die `orderId`
 
-  if (!orderId) {
-    return res.status(400).json({ message: "Ungültige Bestell-ID" });
-  }
+    if (!token || !PayerID) {
+        return res.status(400).json({ message: "Ungültige Bestell-ID oder Payer-ID" });
+    }
 
-  const request = new paypal.orders.OrdersCaptureRequest(orderId);
-  request.requestBody({});
+    const request = new paypal.orders.OrdersCaptureRequest(token);
+    request.requestBody({});
 
-  try {
-    const capture = await client.execute(request);
+    try {
+        const capture = await client.execute(request);
 
-    const customerEmail = capture.result.purchase_units[0].payee.email_address;
-
-    // Sende Benachrichtigung an den Administrator, dass die Zahlung erfasst wurde
-    sendAdminNotification(
-      capture.result.status,
-      orderId,
-      customerEmail,
-      capture
-    );
-
-    res.json({
-      id: capture.result.id,
-      status: capture.result.status,
-    });
-  } catch (error) {
-    console.error("Fehler beim Erfassen der Zahlung:", error);
-    res.status(500).json({ message: "Fehler beim Erfassen der Zahlung" });
-  }
+        if (capture.result.status === "COMPLETED") {
+            res.json({ message: "Zahlung erfolgreich abgeschlossen!", details: capture.result });
+        } else {
+            res.status(400).json({ message: "Zahlung nicht erfolgreich." });
+        }
+    } catch (error) {
+        console.error("Fehler beim Erfassen der Zahlung:", error);
+        res.status(500).json({ message: "Fehler beim Erfassen der Zahlung" });
+    }
 });

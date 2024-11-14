@@ -2,15 +2,13 @@ import asyncHandler from "express-async-handler";
 import CarBuy from "../models/carBuyModel.js";
 import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 import mongoose from "mongoose";
-import { getPublicIdFromUrl } from "../utils/getPublicIdFormUrl.js";
+
 
 export const createBuyCar = asyncHandler(async (req, res) => {
   console.log(req.body);
-
   const {
     carTitle,
     carPrice,
-    carImage,
     carCategory,
     fuelType,
     owner,
@@ -33,6 +31,9 @@ export const createBuyCar = asyncHandler(async (req, res) => {
     userId,
   } = req.body;
 
+
+  
+
   try {
     const user = await checkAdmin(userId);
     const carBuy = new CarBuy({
@@ -42,7 +43,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
       owner,
       isSold,
       carFirstRegistrationDay,
-      carImage,
+      carImage: imagePath,
       carDescription,
       carKilometers,
       carColor,
@@ -73,69 +74,6 @@ export const getCarBuys = asyncHandler(async (req, res) => {
   res.json(carBuys);
 });
 
-
-// const deleteImageFromCloudinary = async (publicId) => {
-//   const cloudinaryUrl = `https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/destroy`;
-//   const data = {
-//     public_id: publicId,
-//     type: 'upload',
-//     invalidate: true,
-//   };
-
-//   await axios.post(cloudinaryUrl, data, {
-//     headers: {
-//       'Authorization': `Bearer YOUR_API_TOKEN`
-//     }
-//   });
-// };
-
-
-
-
-// const getPublicIdFromUrl = (url) => {
-//   const segments = url.split('/');
-//   const publicIdWithExtension = segments[segments.length - 1];
-//   return publicIdWithExtension.split('.')[0]; // Nimm nur die Public ID
-// };
-// export const deleteCarBuy = asyncHandler(async (req, res) => {
-//   const userId = req.body.userId;
-//   const carId = req.body.carId;
-
-//   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-//     res.status(400).json({ message: "Invalid User Id" });
-//     return;
-//   }
-
-//   if (!carId || !mongoose.Types.ObjectId.isValid(carId)) {
-//     res.status(400).json({ message: "Invalid Car Id" });
-//     return;
-//   }
-
-//   try {
-//     const user = await checkAdmin(req.body.userId);
-//     if (!user) {
-//       res.status(400).json({ message: "Invalid User" });
-//       return;
-//     }
-
-//     const carBuy = await CarBuy.findByIdAndDelete(carId);
-//     if (!carBuy) {
-//       res.status(400).json({ message: "Car Buy not found" });
-//       return;
-//     }
-
-//     res.json({ message: "Car Buy deleted successfully" });
-//   } catch (error) {
-//     console.log("Error in deleteCarBuy", error.message);
-//     res.status(400).json({ message: error.message });
-//   }
-// });
-
-
-// Hilfsfunktion zum Extrahieren der publicId aus der Bild-URL
- 
-
-// deleteCarBuy-Funktion
 export const deleteCarBuy = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   const carId = req.body.carId;
@@ -169,13 +107,6 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
       return;
     }
 
-    // // Lösche die Bilder aus Cloudinary
-    // for (const imageUrl of carBuy.carImage) {
-    //   const publicId = getPublicIdFromUrl(imageUrl);
-    //   await deleteImageFromCloudinary(publicId);
-    // }
-
-    // Ändere den Verkaufsstatus des Autos
     carBuy.isSold = true;
     await carBuy.save();
 
@@ -185,8 +116,6 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-
-
 
 export const updateCarBuy = asyncHandler(async (req, res) => {
   const {
@@ -213,7 +142,7 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
     carHorsePower,
     carTechnicalInspection,
     userId,
-    carId
+    carId,
   } = req.body;
 
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -269,8 +198,3 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-
-
-
-
-

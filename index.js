@@ -9,13 +9,16 @@ import appointmentRouter from './routes/appointmentRouter.js';
 import paymentRouter from './routes/paymentRouter.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import bodyParser from 'body-parser';
 import compression from 'compression';
+
 
 dotenv.config();
 dbConnect();
 
 const app = express();
+
+
+
 
 // Middleware setup
 app.use(express.json());
@@ -25,7 +28,8 @@ app.use(cors({
   origin: "http://localhost:3000",
   credentials: true
 }));
-app.use(bodyParser.json());
+
+
 
 // Routes
 app.use('/user', userRouter);
@@ -40,4 +44,3 @@ const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
