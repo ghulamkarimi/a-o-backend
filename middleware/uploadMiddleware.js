@@ -62,3 +62,16 @@ export const uploadFileToWebDAV = async (file, type) => {
   }
 };
 
+export const getFileFromWebDAV = async (filePath) => {
+  try {
+    // Abrufen einer Datei von WebDAV
+    const fileContents = await webdavClient.getFileContents(filePath);
+
+    // Hier kannst du den File-Contents als Antwort senden
+    return fileContents; // Rückgabe der Datei (Bilder) für den Frontend-Download
+  } catch (err) {
+    console.error('Fehler beim Abrufen der Datei:', err.message, err.stack);
+    throw err;
+  }
+};
+
