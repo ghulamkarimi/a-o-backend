@@ -15,3 +15,19 @@ Content-Type: application/json
 #### termin bestätigen
 PUT  http://localhost:7001/appointment/673119ce1b77c3fc4da90568/confirm
 Content-Type: application/json
+
+#### alle Termine anzeigen
+GET http://localhost:7001/appointment/getAll
+Content-Type: application/json
+
+#### Termin löschen
+DELETE http://localhost:7001/appointment/delete
+Content-Type: application/json
+
+{
+    "userId": "6728c1b4b847d4c2fd433414",
+    "appointmentId": "6731c4d2e0af72d40e580f90"
+}
+
+
+

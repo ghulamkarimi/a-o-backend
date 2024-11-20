@@ -1,0 +1,31 @@
+#### createPayment
+POST http://localhost:7001/payment/createPayment
+Content-Type: application/json
+
+{
+    "totalAmount": 100,
+    "customerEmail": "karimiamirhossein12@gmail.com",
+    "carId": "672b60f2a5a816fbc0062e88",
+    "userId": "6728c1b4b847d4c2fd433414"
+}
+
+
+#### create order
+POST http://localhost:7001/payment/createOrder
+Content-Type: application/json
+
+{
+    "orderId": "75R232289J5216126",
+    "customerEmail": "sb-pvnuh32856924@business.example.com",
+    "paymentStatus": "PENDING",
+    "paymentMethod": "PayPal",
+    "amount": 100
+}
+
+#### cature payment
+POST http://localhost:7001/payment/capture
+Content-Type: application/json
+
+{
+    "orderId": "75R232289J5216126"
+}
