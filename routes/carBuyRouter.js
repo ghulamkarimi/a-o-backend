@@ -11,38 +11,33 @@ import {
 } from "../controller/carBuyController.js";
 
 const carBuyRouter = express.Router();
-carBuyRouter.post(
-  "/create",
-  (req, res, next) => {
-    upload.array("carImages", 10)(req, res, (err) => {
-      if (err instanceof multer.MulterError) {
-        return res.status(400).json({ message: "Upload-Fehler: " + err.message });
-      } else if (err) {
-        return res.status(500).json({ message: "Serverfehler: " + err.message });
-      }
-      next();
-    });
-  },
-  async (req, res) => {
-    try {
-      if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-        const imageUrls = await Promise.all(
-          req.files.map((file) => uploadFileToWebDAV(file, 'carBuy')) // Typ korrekt übergeben
-        );
-        req.body.carImages = imageUrls;
-      }
 
-      // Übergabe an die Haupt-Controller-Funktion
-      await createBuyCar(req, res);
-    } catch (error) {
-      console.error("Fehler beim Hochladen der Bilder:", error.message);
-      res.status(500).json({
-        message: "Fehler beim Hochladen der Bilder.",
-        error: error.message,
-      });
+// In der 'carBuyRouter' - Route
+carBuyRouter.post("/create", upload.array("carImages", 10), async (req, res) => {
+  try {
+    if (req.files && req.files.length > 0) {
+      console.log('Received files:', req.files);
+
+      // WebDAV Upload direkt in der Route
+      const imageUrls = await Promise.all(
+        req.files.map((file) => uploadFileToWebDAV(file, 'carBuy'))
+      );
+
+      req.body.carImages = imageUrls;  // Speichere die Bild-URLs in req.body
+
+      console.log('Bild-URLs:', req.body.carImages);
     }
+
+    // Übergabe an den Controller für die Erstellung des Fahrzeugkaufs
+    await createBuyCar(req, res);
+  } catch (error) {
+    console.error("Fehler beim Hochladen der Bilder:", error.message);
+    res.status(500).json({
+      message: "Fehler beim Hochladen der Bilder.",
+      error: error.message,
+    });
   }
-);
+});
 
 
 

@@ -30,29 +30,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
     userId,
   } = req.body;
 
-  let imageUrls = [];
-
-  if (req.files && req.files.length > 0) {
-    try {
-      // Speichere jedes Bild auf dem CIFS-Share und erhalte die URLs
-      const uploadedUrls = await Promise.all(
-        req.files.map(async (file) => {
-          const imageUrl = await uploadFileToWebDAV(file, 'carBuy'); // Hochladen der Datei
-          return imageUrl;
-        })
-      );
-
-      console.log("Hochgeladene URLs:", uploadedUrls); // Debugging
-      imageUrls = uploadedUrls;
-    } catch (error) {
-      console.error("Fehler beim Hochladen der Bilder:", error.message);
-      return res.status(500).json({
-        message: "Fehler bei der Verarbeitung der Bilder.",
-        error: error.message,
-      });
-    }
-  }
-
+  let imageUrls = req.body.carImages || []
   try {
     const user = await checkAdmin(userId);  // Überprüfe, ob der Benutzer ein Admin ist
 
