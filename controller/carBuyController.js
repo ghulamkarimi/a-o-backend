@@ -2,7 +2,7 @@ import asyncHandler from "express-async-handler";
 import CarBuy from "../models/carBuyModel.js";
 import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 import mongoose from "mongoose";
-import { uploadFileToWebDAV } from '../middleware/uploadMiddleware.js';
+
 
 export const createBuyCar = asyncHandler(async (req, res) => {
   const {
@@ -69,10 +69,20 @@ export const createBuyCar = asyncHandler(async (req, res) => {
 });
 
 
-export const getCarBuys = asyncHandler(async (req, res) => {
+export const getCarBuys = asyncHandler(async () => {
+  console.log("Versuche, Fahrzeugkäufe abzurufen...");
+
   const carBuys = await CarBuy.find();
-  res.json(carBuys);
+
+  console.log("Abgerufene Fahrzeugkäufe:", carBuys);
+
+  if (!carBuys || carBuys.length === 0) {
+    return { message: "Keine Fahrzeugkäufe gefunden" }; // Rückgabe einer Fehlermeldung
+  }
+
+  return carBuys; // Rückgabe der Fahrzeugkäufe
 });
+
 
 export const deleteCarBuy = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
