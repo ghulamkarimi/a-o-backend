@@ -2,10 +2,9 @@ import asyncHandler from "express-async-handler";
 import CarBuy from "../models/carBuyModel.js";
 import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 import mongoose from "mongoose";
-
+import { uploadFileToWebDAV } from '../middleware/uploadMiddleware.js';
 
 export const createBuyCar = asyncHandler(async (req, res) => {
-  console.log(req.body);
   const {
     carTitle,
     carPrice,
@@ -31,19 +30,40 @@ export const createBuyCar = asyncHandler(async (req, res) => {
     userId,
   } = req.body;
 
+  let imageUrls = [];
 
-  
+  if (req.files && req.files.length > 0) {
+    try {
+      // Speichere jedes Bild auf dem CIFS-Share und erhalte die URLs
+      const uploadedUrls = await Promise.all(
+        req.files.map(async (file) => {
+          const imageUrl = await uploadFileToWebDAV(file, 'carBuy'); // Hochladen der Datei
+          return imageUrl;
+        })
+      );
+
+      console.log("Hochgeladene URLs:", uploadedUrls); // Debugging
+      imageUrls = uploadedUrls;
+    } catch (error) {
+      console.error("Fehler beim Hochladen der Bilder:", error.message);
+      return res.status(500).json({
+        message: "Fehler bei der Verarbeitung der Bilder.",
+        error: error.message,
+      });
+    }
+  }
 
   try {
-    const user = await checkAdmin(userId);
+    const user = await checkAdmin(userId);  // Überprüfe, ob der Benutzer ein Admin ist
+
     const carBuy = new CarBuy({
       carTitle,
       carCategory,
       carPrice,
       owner,
+      carImages: imageUrls, // Speichere die Bild-URLs in der Datenbank
       isSold,
       carFirstRegistrationDay,
-      carImage: imagePath,
       carDescription,
       carKilometers,
       carColor,
@@ -61,13 +81,15 @@ export const createBuyCar = asyncHandler(async (req, res) => {
       carTechnicalInspection,
       user: user._id,
     });
+
     const createdCarBuy = await carBuy.save();
     res.status(201).json(createdCarBuy);
   } catch (error) {
-    console.log("Error in createCarBuy", error.message);
+    console.error("Fehler in createBuyCar:", error.message);
     res.status(400).json({ message: error.message });
   }
 });
+
 
 export const getCarBuys = asyncHandler(async (req, res) => {
   const carBuys = await CarBuy.find();
