@@ -11,6 +11,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import compression from 'compression';
 import { upload } from './middleware/uploadMiddleware.js';
+import schutzPacketRouter from './routes/schutzPacktRouter.js';
 
 dotenv.config();
 dbConnect();
@@ -33,6 +34,7 @@ app.use("/buy", carBuyRouter);
 app.use("/offer", offerRouter);
 app.use("/appointment", appointmentRouter);
 app.use("/payment", paymentRouter);
+app.use("/schutzPacket",schutzPacketRouter)
 app.post('/upload', upload.array("carImages", 10), (req, res) => {
   try {
     if (req.files) {

@@ -37,11 +37,11 @@ export const createCarRent = asyncHandler(async (req, res) => {
       const startDate = new Date(slot.start);
       const endDate = new Date(slot.end);
       const diffInTime = endDate.getTime() - startDate.getTime();
-      const diffInDays = diffInTime / (1000 * 3600 * 24); // Umrechnung von Millisekunden in Tage
+      const diffInDays = diffInTime / (1000 * 3600 * 24); 
       return totalDays + diffInDays;
     }, 0);
 
-    const totalPrice = rentalDays * parseFloat(carPrice); // carPrice sollte eine Zahl sein
+    const totalPrice = rentalDays * parseFloat(carPrice); 
 
     if (rentalDays < 1) {
       rentalDays = 1;
