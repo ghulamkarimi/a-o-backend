@@ -2,6 +2,7 @@ import asyncHandler from "express-async-handler";
 import CarBuy from "../models/carBuyModel.js";
 import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 import mongoose from "mongoose";
+import {deleteFileFromWebDAV} from "../middleware/webdav.js";
 
 
 export const createBuyCar = asyncHandler(async (req, res) => {
@@ -83,6 +84,14 @@ export const getCarBuys = asyncHandler(async () => {
   return carBuys; // Rückgabe der Fahrzeugkäufe
 });
 
+function extractFilePathFromUrl(url) {
+  const urlObject = new URL(url);
+  let filePath = decodeURIComponent(urlObject.pathname); // Dekodiere den Pfad statt zu kodieren
+  if (filePath.startsWith("/")) {
+    filePath = filePath.substring(1); // Entferne den führenden Slash, wenn nötig
+  }
+  return filePath;
+}
 
 export const deleteCarBuy = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
@@ -105,7 +114,6 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
       return;
     }
 
-    // Überprüfe, ob der Benutzer Adminrechte hat
     if (!user.isAdmin) {
       res.status(403).json({ message: "Not authorized to delete car buy" });
       return;
@@ -117,15 +125,28 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
       return;
     }
 
-    carBuy.isSold = true;
-    await carBuy.save();
+    if (carBuy.carImages && carBuy.carImages.length > 0) {
+      for (const imageUrl of carBuy.carImages) {
+        try {
+          const filePath = extractFilePathFromUrl(imageUrl);
+          await deleteFileFromWebDAV(filePath); // Verwende die Funktion zum Löschen der Datei von WebDAV
+        } catch (error) {
+          throw new Error("Fehler beim Löschen der Datei von WebDAV");
+        }
+      }
+    }
+
+    // Lösche den Fahrzeugkauf aus der Datenbank
+    await carBuy.deleteOne({_id:carId}); // Entferne den Fahrzeugkauf aus der DB
 
     res.json({ message: "Car Buy sold and images deleted successfully" });
   } catch (error) {
-    console.log("Error in deleteCarBuy", error.message);
-    res.status(400).json({ message: error.message });
+    console.log("Fehler in deleteCarBuy:", error.message);
+    res.status(500).json({ message: "Fehler beim Löschen des Car Buy" });
   }
 });
+
+
 
 export const updateCarBuy = asyncHandler(async (req, res) => {
   const {
