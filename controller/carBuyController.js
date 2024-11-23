@@ -1,9 +1,7 @@
-import asyncHandler from "express-async-handler";
-import CarBuy from "../models/carBuyModel.js";
-import { checkAdmin } from "../middleware/validator/checkAdmin.js";
-import mongoose from "mongoose";
-import {deleteFileFromWebDAV} from "../middleware/webdav.js";
 
+import asyncHandler from 'express-async-handler';
+import CarBuy from '../models/carBuyModel.js';
+import { checkAdmin } from '../middleware/validator/checkAdmin.js';
 
 export const createBuyCar = asyncHandler(async (req, res) => {
   const {
@@ -31,16 +29,16 @@ export const createBuyCar = asyncHandler(async (req, res) => {
     userId,
   } = req.body;
 
-  let imageUrls = req.body.carImages || []
   try {
-    const user = await checkAdmin(userId);  // Überprüfe, ob der Benutzer ein Admin ist
+    const user = await checkAdmin(userId); // Überprüfe Adminrechte
+    const imageUrls = req.files.carImages.map((file) => file.path.replace(/\\/g, '/'));
 
     const carBuy = new CarBuy({
       carTitle,
       carCategory,
       carPrice,
       owner,
-      carImages: imageUrls, // Speichere die Bild-URLs in der Datenbank
+      carImages: imageUrls, // Speichere Bild-URLs in der Datenbank
       isSold,
       carFirstRegistrationDay,
       carDescription,
@@ -64,10 +62,12 @@ export const createBuyCar = asyncHandler(async (req, res) => {
     const createdCarBuy = await carBuy.save();
     res.status(201).json(createdCarBuy);
   } catch (error) {
-    console.error("Fehler in createBuyCar:", error.message);
+    console.error('Fehler in createBuyCar:', error.message);
     res.status(400).json({ message: error.message });
   }
 });
+
+
 
 
 export const getCarBuys = asyncHandler(async () => {
@@ -84,14 +84,7 @@ export const getCarBuys = asyncHandler(async () => {
   return carBuys; // Rückgabe der Fahrzeugkäufe
 });
 
-function extractFilePathFromUrl(url) {
-  const urlObject = new URL(url);
-  let filePath = decodeURIComponent(urlObject.pathname); // Dekodiere den Pfad statt zu kodieren
-  if (filePath.startsWith("/")) {
-    filePath = filePath.substring(1); // Entferne den führenden Slash, wenn nötig
-  }
-  return filePath;
-}
+
 
 export const deleteCarBuy = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
@@ -125,16 +118,7 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
       return;
     }
 
-    if (carBuy.carImages && carBuy.carImages.length > 0) {
-      for (const imageUrl of carBuy.carImages) {
-        try {
-          const filePath = extractFilePathFromUrl(imageUrl);
-          await deleteFileFromWebDAV(filePath); // Verwende die Funktion zum Löschen der Datei von WebDAV
-        } catch (error) {
-          throw new Error("Fehler beim Löschen der Datei von WebDAV");
-        }
-      }
-    }
+  
 
     // Lösche den Fahrzeugkauf aus der Datenbank
     await carBuy.deleteOne({_id:carId}); // Entferne den Fahrzeugkauf aus der DB

@@ -10,16 +10,22 @@ import paymentRouter from './routes/paymentRouter.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import compression from 'compression';
-import { upload } from './middleware/uploadMiddleware.js';
 import schutzPacketRouter from './routes/schutzPacktRouter.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 
 dotenv.config();
 dbConnect();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
 // Middleware setup
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 app.use(cookieParser());
 app.use(cors({
@@ -30,23 +36,13 @@ app.use(cors({
 // Routes
 app.use('/user', userRouter);
 app.use("/rent", carRentRouter);
+app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use("/buy", carBuyRouter);
 app.use("/offer", offerRouter);
 app.use("/appointment", appointmentRouter);
 app.use("/payment", paymentRouter);
 app.use("/schutzPacket",schutzPacketRouter)
-app.post('/upload', upload.array("carImages", 10), (req, res) => {
-  try {
-    if (req.files) {
-      // Hier kannst du die Logik für die Dateiverarbeitung hinzufügen
-      res.status(200).json({ message: "Dateien erfolgreich hochgeladen!" });
-    } else {
-      res.status(400).json({ message: "Keine Dateien zum Hochladen." });
-    }
-  } catch (error) {
-    res.status(500).json({ message: "Fehler beim Hochladen der Dateien.", error: error.message });
-  }
-});// Verwende den Upload-Handler hier
+
 
 const PORT = process.env.PORT || 5001;
 
