@@ -3,45 +3,91 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export const webdavClient = createClient(process.env.WEBDAV_URL, {
-  username: process.env.WEBDAV_USERNAME,
-  password: process.env.WEBDAV_PASSWORD,
-});
-
-webdavClient.getDirectoryContents('/')
-  .then(contents => console.log("Inhalt des Wurzelverzeichnisses:", contents))
-  .catch(err => console.error("WebDAV-Fehler:", err.message));
-
-
-export const getFileFromWebDAV = async (req, res) => {
-  const { filePath } = req.params; 
-
-  try {
-    const fileContents = await webdavClient.getFileContents(filePath);
-    res.setHeader("Content-Type", "image/jpeg");
-    res.send(fileContents);
-  } catch (error) {
-    console.error('Fehler beim Abrufen der Datei:', error.message);
-    res.status(500).json({ message: 'Fehler beim Abrufen der Datei' });
-  }
+// WebDAV-Client-Konfiguration
+const initializeWebDAVClient = () => {
+  return createClient(process.env.WEBDAV_URL, {
+    username: process.env.WEBDAV_USERNAME,
+    password: process.env.WEBDAV_PASSWORD,
+  });
 };
 
-export const deleteFileFromWebDAV = async (filePath) => {
-  try {
-    console.log(`Überprüfe Datei-Existenz für Pfad: ${filePath}`);
-    const exists = await webdavClient.exists(filePath);
+// Retry-Funktion
+const retry = (fn, retries = 3) => {
+  return fn().catch((err) => {
+    if (retries > 0) {
+      console.warn(`Retrying... (${3 - retries + 1})`);
+      return retry(fn, retries - 1);
+    }
+    console.error('Retry failed after multiple attempts:', err.message);
+    throw err;
+  });
+};
 
-    if (!exists) {
-      console.warn(`Datei existiert nicht: ${filePath}`);
-      return;
+// Datei hochladen mit Retry
+export const uploadFileToWebDAV = async (file, type) => {
+  try {
+    if (!file || !file.originalname || !file.buffer) {
+      throw new Error('Ungültige Datei oder Buffer nicht vorhanden');
     }
 
-    console.log(`Lösche Datei: ${filePath}`);
-    await webdavClient.deleteFile(filePath);
-    console.log(`Datei erfolgreich gelöscht: ${filePath}`);
-  } catch (error) {
-    console.error(`Fehler beim Löschen der Datei ${filePath}:`, error);
-    throw error; // Weiterwerfen des Fehlers, um ihn in der Controller-Funktion zu behandeln
+    const folderName = {
+      carBuy: 'carBuyImages',
+      carRent: 'carRentImages',
+      user: 'userImages',
+    }[type];
+
+    if (!folderName) {
+      throw new Error('Unbekannter Typ für das Hochladen');
+    }
+
+    const fileExtension = path.extname(file.originalname) || '.jpg';
+    const fileName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${fileExtension}`;
+    const filePath = `/${folderName}/${fileName}`;
+
+    // Retry-Mechanismus für das Hochladen
+    await retry(() => {
+      const client = initializeWebDAVClient(); // Stelle sicher, dass ein neuer Client initialisiert wird
+      return client.putFileContents(filePath, file.buffer);
+    });
+
+    return `${process.env.WEBDAV_URL}${filePath}`;
+  } catch (err) {
+    console.error('Fehler beim Hochladen:', err.message, err.stack);
+    throw err;
   }
 };
 
+// Datei abrufen mit Retry
+export const getFileFromWebDAV = async (filePath) => {
+  try {
+    const fileContents = await retry(() => {
+      const client = initializeWebDAVClient(); // Stelle sicher, dass ein neuer Client initialisiert wird
+      return client.getFileContents(filePath);
+    });
+    return fileContents;
+  } catch (err) {
+    console.error('Fehler beim Abrufen der Datei:', err.message, err.stack);
+    throw err;
+  }
+};
+
+// Datei löschen mit Retry
+export const deleteFileFromWebDAV = async (filePath) => {
+  try {
+    await retry(async () => {
+      const client = initializeWebDAVClient(); // Stelle sicher, dass ein neuer Client initialisiert wird
+      const exists = await client.exists(filePath);
+
+      if (!exists) {
+        console.warn(`Datei existiert nicht: ${filePath}`);
+        return;
+      }
+
+      await client.deleteFile(filePath);
+    });
+    console.log(`Datei erfolgreich gelöscht: ${filePath}`);
+  } catch (err) {
+    console.error(`Fehler beim Löschen der Datei ${filePath}:`, err.message, err.stack);
+    throw err;
+  }
+};
