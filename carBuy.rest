@@ -39,7 +39,7 @@ DELETE http://localhost:7001/buy/delete/
 Content-Type: application/json
 
 {
-    "carId": "673ee9405df57170d6eb4215",
+    "carId": "6741de34797ddf9990dfb62e",
     "userId": "6728c1b4b847d4c2fd433414"
 }
 
@@ -48,7 +48,7 @@ PUT http://localhost:7001/buy/update
 Content-Type: application/json
 
 {
-    "carId": "673ee90c5df57170d6eb420f",
+    "carId": "6741d7cc6c60f231d56b9523",
     "userId": "6728c1b4b847d4c2fd433414",
     "carTitle": "BMW",
     "carPrice": "10000",

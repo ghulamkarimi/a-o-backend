@@ -2,6 +2,8 @@
 import asyncHandler from 'express-async-handler';
 import CarBuy from '../models/carBuyModel.js';
 import { checkAdmin } from '../middleware/validator/checkAdmin.js';
+import fs from 'fs';
+import path from 'path';
 
 export const createBuyCar = asyncHandler(async (req, res) => {
   const {
@@ -31,7 +33,13 @@ export const createBuyCar = asyncHandler(async (req, res) => {
 
   try {
     const user = await checkAdmin(userId); // Überprüfe Adminrechte
-    const imageUrls = req.files.carImages.map((file) => file.path.replace(/\\/g, '/'));
+ // Base URL für Bildpfade
+ const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 7001}`;
+
+ // Datei-URLs aus `req.files` extrahieren
+ const imageUrls = req.files.carImages.map((file) =>
+   `${BASE_URL}/${file.path.replace(/\\/g, '/')}` // Pfad mit Base URL
+ );
 
     const carBuy = new CarBuy({
       carTitle,
@@ -67,149 +75,113 @@ export const createBuyCar = asyncHandler(async (req, res) => {
   }
 });
 
+export const getCarBuys = asyncHandler(async (req, res) => {
+  try {
+    // Abruf aller Fahrzeugkäufe aus der Datenbank
+    const carBuys = await CarBuy.find();
 
-
-
-export const getCarBuys = asyncHandler(async () => {
-  console.log("Versuche, Fahrzeugkäufe abzurufen...");
-
-  const carBuys = await CarBuy.find();
-
-  console.log("Abgerufene Fahrzeugkäufe:", carBuys);
-
-  if (!carBuys || carBuys.length === 0) {
-    return { message: "Keine Fahrzeugkäufe gefunden" }; // Rückgabe einer Fehlermeldung
+    // Sende die Fahrzeugkäufe als JSON-Antwort
+    res.status(200).json(carBuys);
+  } catch (error) {
+    console.error('Fehler beim Abrufen der Fahrzeugkäufe:', error.message);
+    res.status(500).json({ message: 'Fehler beim Abrufen der Fahrzeugkäufe' });
   }
-
-  return carBuys; // Rückgabe der Fahrzeugkäufe
 });
-
-
 
 export const deleteCarBuy = asyncHandler(async (req, res) => {
-  const userId = req.body.userId;
-  const carId = req.body.carId;
+  const { userId, carId } = req.body;
 
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-    res.status(400).json({ message: "Invalid User Id" });
-    return;
-  }
-
-  if (!carId || !mongoose.Types.ObjectId.isValid(carId)) {
-    res.status(400).json({ message: "Invalid Car Id" });
-    return;
+  // Überprüfen, ob `userId` und `carId` gültig sind
+  if (!userId || !carId) {
+    return res.status(400).json({ message: 'User ID und Car ID sind erforderlich' });
   }
 
   try {
+    // Überprüfen, ob der Benutzer Admin ist
     const user = await checkAdmin(userId);
-    if (!user) {
-      res.status(400).json({ message: "Invalid User" });
-      return;
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ message: 'Nicht autorisiert, Fahrzeug zu löschen' });
     }
 
-    if (!user.isAdmin) {
-      res.status(403).json({ message: "Not authorized to delete car buy" });
-      return;
-    }
-
+    // Fahrzeug abrufen
     const carBuy = await CarBuy.findById(carId);
     if (!carBuy) {
-      res.status(404).json({ message: "Car Buy not found" });
-      return;
+      return res.status(404).json({ message: 'Fahrzeug nicht gefunden' });
     }
 
-  
+    // Bilderpfade löschen
+    if (carBuy.carImages && carBuy.carImages.length > 0) {
+      carBuy.carImages.forEach((imageUrl) => {
+        // Entferne die Base URL und erhalte den relativen Pfad
+        const relativePath = imageUrl.replace(`${process.env.BASE_URL || `http://localhost:${process.env.PORT || 7001}`}/`, '');
+        const fullPath = path.join(process.cwd(), relativePath); // Absoluter Pfad
 
-    // Lösche den Fahrzeugkauf aus der Datenbank
-    await carBuy.deleteOne({_id:carId}); // Entferne den Fahrzeugkauf aus der DB
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath); // Datei löschen
+          console.log(`Gelöschte Datei: ${fullPath}`);
+        } else {
+          console.warn(`Datei nicht gefunden: ${fullPath}`);
+        }
+      });
+    }
 
-    res.json({ message: "Car Buy sold and images deleted successfully" });
+    // Fahrzeug aus der Datenbank löschen
+    await CarBuy.findByIdAndDelete(carId);
+
+    res.status(200).json({ message: 'Fahrzeug und zugehörige Bilder erfolgreich gelöscht' });
   } catch (error) {
-    console.log("Fehler in deleteCarBuy:", error.message);
-    res.status(500).json({ message: "Fehler beim Löschen des Car Buy" });
+    console.error('Fehler beim Löschen des Fahrzeugs:', error.message);
+    res.status(500).json({ message: 'Fehler beim Löschen des Fahrzeugs' });
   }
 });
-
-
-
 export const updateCarBuy = asyncHandler(async (req, res) => {
-  const {
-    carTitle,
-    carPrice,
-    carImage,
-    carCategory,
-    fuelType,
-    carEuroNorm,
-    owner,
-    isSold,
-    carDescription,
-    carKilometers,
-    carColor,
-    carAirConditioning,
-    carSeat,
-    damagedCar,
-    carNavigation,
-    carParkAssist,
-    carAccidentFree,
-    carFirstRegistrationDay,
-    carGearbox,
-    carMotor,
-    carHorsePower,
-    carTechnicalInspection,
-    userId,
-    carId,
-  } = req.body;
+  const { userId, carId } = req.body;
 
-  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
-    res.status(400).json({ message: "Invalid User Id" });
-    return;
-  }
-
-  if (!carId || !mongoose.Types.ObjectId.isValid(carId)) {
-    res.status(400).json({ message: "Invalid Car Id" });
-    return;
+  if (!userId || !carId) {
+    return res.status(400).json({ message: 'User ID und Car ID sind erforderlich' });
   }
 
   try {
     const user = await checkAdmin(userId);
-    if (!user) {
-      res.status(400).json({ message: "Invalid User" });
-      return;
+    if (!user || !user.isAdmin) {
+      return res.status(403).json({ message: 'Nicht autorisiert, Fahrzeug zu aktualisieren' });
     }
 
     const carBuy = await CarBuy.findById(carId);
     if (!carBuy) {
-      res.status(404).json({ message: "Car Buy not found" });
-      return;
+      return res.status(404).json({ message: 'Fahrzeug nicht gefunden' });
     }
 
-    carBuy.carTitle = carTitle;
-    carBuy.carPrice = carPrice;
-    carBuy.carImage = carImage;
-    carBuy.carCategory = carCategory;
-    carBuy.carDescription = carDescription;
-    carBuy.carKilometers = carKilometers;
-    carBuy.carColor = carColor;
-    carBuy.carAirConditioning = carAirConditioning;
-    carBuy.carSeat = carSeat;
-    carEuroNorm = carEuroNorm;
-    carBuy.damagedCar = damagedCar;
-    carBuy.carNavigation = carNavigation;
-    carBuy.carParkAssist = carParkAssist;
-    carBuy.carAccidentFree = carAccidentFree;
-    carBuy.carFirstRegistrationDay = carFirstRegistrationDay;
-    carBuy.carGearbox = carGearbox;
-    carBuy.carMotor = carMotor;
-    carBuy.carHorsePower = carHorsePower;
-    carBuy.fuelType = fuelType;
-    carBuy.owner = owner;
-    carBuy.isSold = isSold;
-    carBuy.carTechnicalInspection = carTechnicalInspection;
+    // **Base URL definieren**
+    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 7001}`;
+
+    // **Alte Bilder löschen**
+    carBuy.carImages.forEach((imageUrl) => {
+      const relativePath = imageUrl.replace(`${baseUrl}/`, ''); // Relativen Pfad extrahieren
+      const localPath = path.join(process.cwd(), relativePath); // Absoluten Pfad erstellen
+      if (fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+        console.log(`Gelöschte Datei: ${localPath}`);
+      } else {
+        console.warn(`Datei nicht gefunden: ${localPath}`);
+      }
+    });
+
+    // **Neue Bilder hinzufügen**
+    const newImageUrls = req.files?.carImages?.map((file) =>
+      `${baseUrl}/${file.path.replace(/\\/g, '/')}`
+    ) || [];
+
+    // **Fahrzeugdaten aktualisieren**
+    const updates = { ...req.body, carImages: newImageUrls.length > 0 ? newImageUrls : carBuy.carImages };
+    Object.assign(carBuy, updates);
 
     const updatedCarBuy = await carBuy.save();
-    res.json(updatedCarBuy);
+    res.status(200).json(updatedCarBuy);
   } catch (error) {
-    console.log("Error in updateCarBuy", error.message);
-    res.status(400).json({ message: error.message });
+    console.error('Fehler beim Aktualisieren des Fahrzeugs:', error.message);
+    res.status(500).json({ message: 'Fehler beim Aktualisieren des Fahrzeugs' });
   }
 });
+
+

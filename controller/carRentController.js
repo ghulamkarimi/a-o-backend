@@ -21,7 +21,6 @@ export const createCarRent = asyncHandler(async (req, res) => {
   const {
     carName,
     carPrice,
-    carImage,
     carAC,
     carDoors,
     carPeople,
@@ -48,6 +47,11 @@ export const createCarRent = asyncHandler(async (req, res) => {
      
     }
     const user = await checkAdmin(userId);
+    const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5001}`;
+    const imageUrl = req.files.carImages.map((file) =>
+      `${BASE_URL}/${file.path.replace(/\\/g, '/')}` // Pfad mit Base URL
+    );
+   
     const carRent = new CarRent({
       carName,
       carAC,
@@ -57,7 +61,7 @@ export const createCarRent = asyncHandler(async (req, res) => {
       carPrice,
       carGear,
       isBooked,
-      carImage,
+      carImage: imageUrl,
       user: user._id,
       bookedSlots,
       totalPrice,
