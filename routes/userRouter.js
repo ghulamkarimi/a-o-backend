@@ -11,10 +11,13 @@ import {
   confirmEmailVerificationCode,
   changePasswordWithEmail,
   userRefreshToken,
+  profilePhotoUpload,
 } from "../controller/userController.js";
 import loginLimiter from "../rateLimit/rateLimiter.js";
 import { verifyToken } from "../middleware/token/verifyToken.js";
 import { userRegisterValidator } from "../middleware/validator/userValidator.js";
+
+import { upload } from "../middleware/upload.js";
 
 
 const userRouter = express.Router();
@@ -30,5 +33,10 @@ userRouter.put("/changePassword", verifyToken, changePasswordByLoginUser);
 userRouter.post("/confirmEmail", confirmEmail);
 userRouter.post("/confirmVerificationCode", confirmEmailVerificationCode);
 userRouter.put("/changePasswordWithEmail", changePasswordWithEmail);
-
+userRouter.post(
+  "/profile/photo",
+  verifyToken, // Authentifizierungsmiddleware
+  upload.single("userImage"), // Middleware für Datei-Uploads
+  profilePhotoUpload // Funktion für Profilbild-Upload
+);
 export default userRouter;

@@ -14,6 +14,7 @@ const storage = multer.diskStorage({
         buy: 'images/carBuyImages',
         rent: 'images/carRentImages',
         user: 'images/userImages',
+        offer: 'images/offerImages',
       };
 
       // Ordner basierend auf Route ermitteln
@@ -55,18 +56,75 @@ export const upload = multer({
   },
 });
 
-export const uploadMiddleware = multer({
-    storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // Max. 5 MB pro Datei
-    fileFilter: (req, file, cb) => {
-      if (!file.mimetype.startsWith('image/')) {
-        return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
-      }
-      cb(null, true);
-    },
-  }).fields([
-    { name: 'carImages', maxCount: 10 }, // Akzeptiere bis zu 10 Dateien mit dem Namen "carImages"
-  ]);
+export const uploadMiddleware = (req, res, next) => {
+  const route = req.baseUrl.split('/').pop(); // Bestimme die Route
+  console.log(`Detected Route: ${route}`); // Debugging
+
+  // Dynamische Konfiguration basierend auf der Route
+  let multerInstance;
+
+  if (route === 'buy') {
+    multerInstance = multer({
+      storage,
+      limits: { fileSize: 10 * 1024 * 1024 }, // Max. 10 MB pro Datei
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
+        }
+        cb(null, true);
+      },
+    }).fields([{ name: 'carImages', maxCount: 10 }]); // Bis zu 10 Bilder
+  } else if (route === 'rent') {
+    multerInstance = multer({
+      storage,
+      limits: { fileSize: 5 * 1024 * 1024 }, // Max. 5 MB pro Datei
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
+        }
+        cb(null, true);
+      },
+    }).single('carImage'); // Nur ein Bild
+  } else if (route === 'user') {
+    multerInstance = multer({
+      storage,
+      limits: { fileSize: 5 * 1024 * 1024 }, // Max. 5 MB pro Datei
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
+        }
+        cb(null, true);
+      },
+    }).single('userImage'); // Nur ein Bild
+  } else if (route === 'offer') {
+    multerInstance = multer({
+      storage,
+      limits: { fileSize: 10 * 1024 * 1024 }, // Max. 15 MB pro Datei
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.startsWith('image/')) {
+          return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
+        }
+        cb(null, true);
+      },
+    }).single('offerImages'); // Bis zu 1 Bilder
+  } else {
+    return res.status(400).json({ message: 'Ungültige Route für Dateiupload' });
+  }
+
+  // Middleware ausführen
+  multerInstance(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      console.error(`Multer Fehler: ${err.message}`);
+      return res.status(400).json({ message: `Multer Fehler: ${err.message}` });
+    }
+    if (err) {
+      console.error(`Upload Fehler: ${err.message}`);
+      return res.status(500).json({ message: `Upload Fehler: ${err.message}` });
+    }
+    next();
+  });
+};
+
   
   // Fehler-Handler für Multer
   export const handleUploadErrors = (err, req, res, next) => {

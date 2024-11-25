@@ -3,6 +3,10 @@ import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 import { jwtDecode } from "jwt-decode";
 import { sendVerificationLinkToEmail } from "../email/mailSender.js";
+import fs from "fs";
+import path from "path";
+
+
 
 export const userRegister = asyncHandler(async (req, res) => {
   const {
@@ -325,3 +329,51 @@ export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
     throw new Error("Invalid verification code");
   }
 });
+
+export const profilePhotoUpload = asyncHandler(async (req, res) => {
+  console.log("ProfilePhotoUpload gestartet");
+
+  const userId = req.userId; // Benutzer-ID aus dem Token
+  console.log("Benutzer-ID:", userId);
+
+  if (!req.file) {
+    console.log("Keine Datei hochgeladen");
+    return res.status(400).json({ message: "Keine Datei hochgeladen" });
+  }
+
+  const filePath = `${req.protocol}://${req.get("host")}/${req.file.path}`;
+  console.log("Dateipfad:", filePath);
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log("Benutzer nicht gefunden");
+      return res.status(404).json({ message: "Benutzer nicht gefunden" });
+    }
+
+    console.log("Aktueller Benutzer:", user);
+
+    // Altes Profilbild löschen (falls vorhanden)
+    if (user.profile_photo && user.profile_photo !== "default_avatar_url") {
+      const oldPath = path.resolve(`./${user.profile_photo.split(req.get("host"))[1]}`);
+      console.log("Alter Bildpfad:", oldPath);
+
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+        console.log("Altes Bild gelöscht");
+      }
+    }
+
+    // Neues Profilbild speichern
+    user.profile_photo = filePath;
+    await user.save();
+
+    console.log("Neues Profilbild gespeichert");
+
+    res.status(200).json({ message: "Profilbild erfolgreich aktualisiert", profile_photo: user.profile_photo });
+  } catch (error) {
+    console.error("Fehler beim Hochladen des Profilbilds:", error.message);
+    res.status(500).json({ message: "Interner Serverfehler" });
+  }
+});
+

@@ -13,7 +13,7 @@ export const verifyToken = (req, res, next) => {
     return res.status(401).json({ message: "Access Denied" });
   }
 
-  jwt.verify(token, process.env.REFRESH_TOKEN, (err, user) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN,  (err, user) => {
     if (err) {
       return res.status(403).json({ message: "Unauthorized Access" });
     }
