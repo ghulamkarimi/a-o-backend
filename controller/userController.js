@@ -109,23 +109,23 @@ export const userLogin = asyncHandler(async (req, res) => {
 });
 
 export const userLogout = async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
+  const token = req.cookies.refreshToken;
 
-  if (!refreshToken) {
+  if (!token) {
     console.error("Fehler: Refresh Token fehlt.");
     return res.status(401).json({ message: "Refresh token missing" });
   }
 
   try {
     // Benutzer anhand des Tokens finden
-    const user = await User.findOne({ refreshToken });
+    const user = await User.findOne({ refreshToken : token });
     if (!user) {
       console.error("Fehler: Benutzer mit Refresh Token nicht gefunden.");
       return res.status(404).json({ message: "User not found" });
     }
 
     // Refresh-Token entfernen
-    user.refreshToken = null;
+    user.refreshToken = undefined;
     await user.save();
 
     // Cookie löschen
@@ -142,12 +142,9 @@ export const userLogout = async (req, res) => {
   }
 };
 
-
-
-
 export const refreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-
+  console.log("Refresh-Token:", refreshToken);
   if (!refreshToken) {
     console.error("Fehler: Refresh Token fehlt.");
     return res.status(401).json({ message: "Refresh token missing" });
@@ -156,11 +153,12 @@ export const refreshToken = async (req, res) => {
   try {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
     const user = await User.findById(decoded.userId);
-
+     console.log("Benutzer:", user);
     if (!user) {
       console.error("Fehler: Benutzer nicht gefunden.");
       return res.status(403).json({ message: "Invalid refresh token" });
     }
+    console.log("Benutzer-Refresh-Token:", user.refreshToken);
     if (user.refreshToken !== refreshToken) {
       console.error("Fehler: Refresh Token stimmt nicht mit dem gespeicherten überein.");
       return res.status(403).json({ message: "Invalid refresh token" });
@@ -195,8 +193,6 @@ export const refreshToken = async (req, res) => {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 };
-
-
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {

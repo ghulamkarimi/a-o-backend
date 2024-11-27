@@ -33,7 +33,7 @@ userRouter.put("/changePassword", verifyToken, changePasswordByLoginUser);
 userRouter.post("/confirmEmail", confirmEmail);
 userRouter.post("/confirmVerificationCode", confirmEmailVerificationCode);
 userRouter.put("/changePasswordWithEmail", changePasswordWithEmail);
-userRouter.post(
+userRouter.put(
   "/profile/photo",
   verifyToken,
   (req, res, next) => {
