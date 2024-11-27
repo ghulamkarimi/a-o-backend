@@ -317,8 +317,7 @@ export const profilePhotoUpload = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Keine Datei hochgeladen" });
   }
 
-  const filePath = `${req.protocol}://${req.get("host")}/${req.file.path}`;
-
+  const filePath = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
   try {
     const user = await User.findById(userId);
     if (!user) {
