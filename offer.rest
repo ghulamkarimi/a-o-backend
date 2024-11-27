@@ -8,7 +8,7 @@ Content-Type: application/json
     "oldPrice":"120",
     "newPrice":"75",
     "imageUrl":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
-    "userId": "6728c1b4b847d4c2fd433414"
+    "userId": "6746413a50dac6933deb044e"
 }
 
 #### edit Offer
@@ -22,7 +22,7 @@ Content-Type: application/json
     "oldPrice": "165",
     "newPrice": "130",
     "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
-    "userId": "6728c1b4b847d4c2fd433414"
+    "userId": "6746413a50dac6933deb044e"
 }
 
 
