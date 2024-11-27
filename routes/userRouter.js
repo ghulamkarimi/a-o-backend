@@ -10,7 +10,7 @@ import {
   confirmEmail,
   confirmEmailVerificationCode,
   changePasswordWithEmail,
-  userRefreshToken,
+  refreshToken,
   profilePhotoUpload,
 } from "../controller/userController.js";
 import loginLimiter from "../rateLimit/rateLimiter.js";
@@ -25,7 +25,7 @@ const userRouter = express.Router();
 userRouter.post("/register", userRegisterValidator,userRegister);
 userRouter.post("/login", loginLimiter,userLogin);
 userRouter.delete("/logout", userLogout);
-userRouter.post("/refreshToken", userRefreshToken);
+userRouter.post("/refreshToken", refreshToken);
 userRouter.get("/allUsers", getAllUsers);
 userRouter.put("/update/", verifyToken, userEdit);
 userRouter.delete("/deleteUser/:id", verifyToken, deleteAccount);
@@ -35,8 +35,18 @@ userRouter.post("/confirmVerificationCode", confirmEmailVerificationCode);
 userRouter.put("/changePasswordWithEmail", changePasswordWithEmail);
 userRouter.post(
   "/profile/photo",
-  verifyToken, // Authentifizierungsmiddleware
-  upload.single("userImage"), // Middleware für Datei-Uploads
-  profilePhotoUpload // Funktion für Profilbild-Upload
+  verifyToken,
+  (req, res, next) => {
+    upload.single("userImage")(req, res, (err) => {
+      if (err) {
+        console.error("Multer Fehler:", err.message);
+        return res.status(400).json({ message: `Multer Fehler: ${err.message}` });
+      }
+      next();
+    });
+  },
+  profilePhotoUpload
 );
+
+
 export default userRouter;

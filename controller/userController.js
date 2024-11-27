@@ -108,87 +108,95 @@ export const userLogin = asyncHandler(async (req, res) => {
   }
 });
 
-export const userLogout = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies.refreshToken; 
-  console.log("Attempting logout with refreshToken:", refreshToken);
+export const userLogout = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    console.error("No refreshToken found in request");
-    return res.status(401).json({ error: "User not logged in" });
+    console.error("Fehler: Refresh Token fehlt.");
+    return res.status(401).json({ message: "Refresh token missing" });
   }
 
-  const user = await User.findOne({ refreshToken }); 
-  if (!user) {
-    console.error("No user associated with provided refreshToken");
-    return res.status(404).json({ error: "User not found" });
+  try {
+    // Benutzer anhand des Tokens finden
+    const user = await User.findOne({ refreshToken });
+    if (!user) {
+      console.error("Fehler: Benutzer mit Refresh Token nicht gefunden.");
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Refresh-Token entfernen
+    user.refreshToken = null;
+    await user.save();
+
+    // Cookie löschen
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    });
+
+    return res.status(200).json({ message: "Logout erfolgreich" });
+  } catch (error) {
+    console.error("Fehler beim Logout:", error.message);
+    return res.status(500).json({ message: "Logout failed" });
   }
+};
 
 
-  user.refreshToken = null;
-  await user.save();
 
 
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-
-  res.status(200).json({
-    message: "User Logged Out Successfully",
-  });
-});
-
-export const userRefreshToken = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies.refreshToken; 
-  console.log("Attempting to refresh token with refreshToken:", refreshToken);
+export const refreshToken = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    console.error("No refreshToken found in request");
-    return res.status(401).json({ error: "User not logged in" });
+    console.error("Fehler: Refresh Token fehlt.");
+    return res.status(401).json({ message: "Refresh token missing" });
   }
 
-  const user = await User.findOne({ refreshToken });
-  if (!user) {
-    console.error("No user associated with provided refreshToken");
-    return res.status(403).json({ error: "Invalid refresh token" });
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      console.error("Fehler: Benutzer nicht gefunden.");
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+    if (user.refreshToken !== refreshToken) {
+      console.error("Fehler: Refresh Token stimmt nicht mit dem gespeicherten überein.");
+      return res.status(403).json({ message: "Invalid refresh token" });
+    }
+    const accessToken = jwt.sign(
+      {
+        userId: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        photo: user.profile_photo,
+        isAdmin: user.isAdmin,
+      },
+      process.env.ACCESS_TOKEN, 
+      { expiresIn: "15m" } 
+
+    ); 
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 15 * 60 * 1000, // 15 Minuten
+      sameSite: "strict",
+    });
+
+    console.log("Neuer Access-Token erfolgreich erstellt.");
+
+    // Antworte mit dem neuen Access-Token
+    return res.status(200).json({ accessToken });
+  } catch (error) {
+    console.error("Fehler beim Verifizieren des Refresh-Tokens:", error.message);
+    return res.status(403).json({ message: "Invalid refresh token" });
   }
-
- 
-  const accessToken = jwt.sign(
-    {
-      userId: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      photo: user.profile_photo,
-      isAdmin: user.isAdmin,
-    },
-    process.env.ACCESS_TOKEN,
-    { expiresIn: "15m" } 
-  );
+};
 
 
-  res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 15 * 60 * 1000, 
-    sameSite: "strict",
-  });
-
-  res.status(200).json({
-    message: "Token refreshed successfully",
-    accessToken,
-  });
-});
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
@@ -331,7 +339,11 @@ export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
 });
 
 export const profilePhotoUpload = asyncHandler(async (req, res) => {
-  console.log("ProfilePhotoUpload gestartet");
+  console.log("Anfrage-Header:", req.headers);
+  console.log("Anfrage-Cookies:", req.cookies);
+  console.log("Body:", req.body);
+  console.log("Dateien:", req.file); // Bei einzelnen Dateien
+  console.log("Dateien-Array:", req.files); 
 
   const userId = req.userId; // Benutzer-ID aus dem Token
   console.log("Benutzer-ID:", userId);
