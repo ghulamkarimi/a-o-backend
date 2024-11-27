@@ -6,8 +6,6 @@ import { sendVerificationLinkToEmail } from "../email/mailSender.js";
 import fs from "fs";
 import path from "path";
 
-
-
 export const userRegister = asyncHandler(async (req, res) => {
   const {
     firstName,
@@ -42,7 +40,6 @@ export const userRegister = asyncHandler(async (req, res) => {
   }
 });
 
-
 export const userLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
   console.log("Attempting to log in user with email:", email);
@@ -63,33 +60,22 @@ export const userLogin = asyncHandler(async (req, res) => {
       isAdmin,
     } = userFound;
 
-    
     const accessToken = jwt.sign(
       { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "15m" }
+      { expiresIn: "10s" }
     );
 
-   
     const refreshToken = jwt.sign(
       { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin },
       process.env.REFRESH_TOKEN,
       { expiresIn: "30d" }
     );
 
-   
     userFound.refreshToken = refreshToken;
     await userFound.save();
 
- 
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 15 * 60 * 1000, 
-      sameSite: "strict",
-    });
-
- 
+  
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -118,7 +104,7 @@ export const userLogout = async (req, res) => {
 
   try {
     // Benutzer anhand des Tokens finden
-    const user = await User.findOne({ refreshToken : token });
+    const user = await User.findOne({ refreshToken: token });
     if (!user) {
       console.error("Fehler: Benutzer mit Refresh Token nicht gefunden.");
       return res.status(404).json({ message: "User not found" });
@@ -144,23 +130,17 @@ export const userLogout = async (req, res) => {
 
 export const refreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
-  console.log("Refresh-Token:", refreshToken);
   if (!refreshToken) {
-    console.error("Fehler: Refresh Token fehlt.");
     return res.status(401).json({ message: "Refresh token missing" });
   }
 
   try {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
     const user = await User.findById(decoded.userId);
-     console.log("Benutzer:", user);
     if (!user) {
-      console.error("Fehler: Benutzer nicht gefunden.");
       return res.status(403).json({ message: "Invalid refresh token" });
     }
-    console.log("Benutzer-Refresh-Token:", user.refreshToken);
     if (user.refreshToken !== refreshToken) {
-      console.error("Fehler: Refresh Token stimmt nicht mit dem gespeicherten überein.");
       return res.status(403).json({ message: "Invalid refresh token" });
     }
     const accessToken = jwt.sign(
@@ -173,23 +153,19 @@ export const refreshToken = async (req, res) => {
         photo: user.profile_photo,
         isAdmin: user.isAdmin,
       },
-      process.env.ACCESS_TOKEN, 
-      { expiresIn: "15m" } 
-
-    ); 
+      process.env.ACCESS_TOKEN,
+      { expiresIn: "15m" }
+    );
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 15 * 60 * 1000, // 15 Minuten
+      maxAge:30 * 24 * 60 * 60 * 1000, // 15 Minuten
       sameSite: "strict",
     });
-
-    console.log("Neuer Access-Token erfolgreich erstellt.");
 
     // Antworte mit dem neuen Access-Token
     return res.status(200).json({ accessToken });
   } catch (error) {
-    console.error("Fehler beim Verifizieren des Refresh-Tokens:", error.message);
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 };
@@ -204,8 +180,7 @@ export const getAllUsers = asyncHandler(async (req, res) => {
   }
 });
 
-export const userEdit = asyncHandler(async (req, res
-) => {
+export const userEdit = asyncHandler(async (req, res) => {
   try {
     const { firstName, lastName, email, phone } = req.body;
     const userId = req.user.userId;
@@ -335,40 +310,28 @@ export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
 });
 
 export const profilePhotoUpload = asyncHandler(async (req, res) => {
-  console.log("Anfrage-Header:", req.headers);
-  console.log("Anfrage-Cookies:", req.cookies);
-  console.log("Body:", req.body);
-  console.log("Dateien:", req.file); // Bei einzelnen Dateien
-  console.log("Dateien-Array:", req.files); 
-
   const userId = req.userId; // Benutzer-ID aus dem Token
-  console.log("Benutzer-ID:", userId);
 
   if (!req.file) {
-    console.log("Keine Datei hochgeladen");
     return res.status(400).json({ message: "Keine Datei hochgeladen" });
   }
 
   const filePath = `${req.protocol}://${req.get("host")}/${req.file.path}`;
-  console.log("Dateipfad:", filePath);
 
   try {
     const user = await User.findById(userId);
     if (!user) {
-      console.log("Benutzer nicht gefunden");
       return res.status(404).json({ message: "Benutzer nicht gefunden" });
     }
 
-    console.log("Aktueller Benutzer:", user);
-
     // Altes Profilbild löschen (falls vorhanden)
     if (user.profile_photo && user.profile_photo !== "default_avatar_url") {
-      const oldPath = path.resolve(`./${user.profile_photo.split(req.get("host"))[1]}`);
-      console.log("Alter Bildpfad:", oldPath);
+      const oldPath = path.resolve(
+        `./${user.profile_photo.split(req.get("host"))[1]}`
+      );
 
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath);
-        console.log("Altes Bild gelöscht");
       }
     }
 
@@ -376,12 +339,13 @@ export const profilePhotoUpload = asyncHandler(async (req, res) => {
     user.profile_photo = filePath;
     await user.save();
 
-    console.log("Neues Profilbild gespeichert");
-
-    res.status(200).json({ message: "Profilbild erfolgreich aktualisiert", profile_photo: user.profile_photo });
+    res
+      .status(200)
+      .json({
+        message: "Profilbild erfolgreich aktualisiert",
+        profile_photo: user.profile_photo,
+      });
   } catch (error) {
-    console.error("Fehler beim Hochladen des Profilbilds:", error.message);
     res.status(500).json({ message: "Interner Serverfehler" });
   }
 });
-

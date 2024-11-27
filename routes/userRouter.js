@@ -25,7 +25,7 @@ const userRouter = express.Router();
 userRouter.post("/register", userRegisterValidator,userRegister);
 userRouter.post("/login", loginLimiter,userLogin);
 userRouter.delete("/logout", userLogout);
-userRouter.post("/refreshToken", refreshToken);
+userRouter.get("/refreshToken", refreshToken);
 userRouter.get("/allUsers", getAllUsers);
 userRouter.put("/update/", verifyToken, userEdit);
 userRouter.delete("/deleteUser/:id", verifyToken, deleteAccount);
