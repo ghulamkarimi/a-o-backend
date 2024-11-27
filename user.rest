@@ -29,10 +29,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzQ3N
 GET http://localhost:7001/user/refreshToken
  
 
-
-
-
-
 #### get user profile
 GET http://localhost:7001/user/allUsers
 Content-Type: application/json

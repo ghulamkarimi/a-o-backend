@@ -88,7 +88,7 @@ export const uploadMiddleware = (req, res, next) => {
   } else if (route === 'user') {
     multerInstance = multer({
       storage,
-      limits: { fileSize: 5 * 1024 * 1024 }, // Max. 5 MB pro Datei
+      limits: { fileSize: 15 * 1024 * 1024 }, // Max. 5 MB pro Datei
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.startsWith('image/')) {
           return cb(new Error('Nur Bilddateien sind erlaubt!'), false);

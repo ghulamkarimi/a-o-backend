@@ -130,6 +130,7 @@ export const userLogout = async (req, res) => {
 
 export const refreshToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
+
   if (!refreshToken) {
     return res.status(401).json({ message: "Refresh token missing" });
   }
@@ -137,12 +138,11 @@ export const refreshToken = async (req, res) => {
   try {
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
     const user = await User.findById(decoded.userId);
-    if (!user) {
+
+    if (!user || user.refreshToken !== refreshToken) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
-    if (user.refreshToken !== refreshToken) {
-      return res.status(403).json({ message: "Invalid refresh token" });
-    }
+
     const accessToken = jwt.sign(
       {
         userId: user._id,
@@ -154,21 +154,22 @@ export const refreshToken = async (req, res) => {
         isAdmin: user.isAdmin,
       },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "15m" }
+      { expiresIn: "15s" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
     );
+
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge:30 * 24 * 60 * 60 * 1000, // 15 Minuten
+      maxAge: 5000, 
       sameSite: "strict",
     });
 
-    // Antworte mit dem neuen Access-Token
     return res.status(200).json({ accessToken });
   } catch (error) {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 };
+
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
@@ -339,13 +340,20 @@ export const profilePhotoUpload = asyncHandler(async (req, res) => {
     user.profile_photo = filePath;
     await user.save();
 
-    res
-      .status(200)
-      .json({
-        message: "Profilbild erfolgreich aktualisiert",
+    // Aktualisierte Benutzerinformationen in der Antwort zurückgeben
+    res.status(200).json({
+      message: "Profilbild erfolgreich aktualisiert",
+      userInfo: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
         profile_photo: user.profile_photo,
-      });
+        isAdmin: user.isAdmin,
+      },
+    });
   } catch (error) {
+    console.error("Fehler beim Hochladen des Profilbilds:", error.message);
     res.status(500).json({ message: "Interner Serverfehler" });
   }
 });
