@@ -7,7 +7,7 @@ import {
   userEdit,
   deleteAccount,
   changePasswordByLoginUser,
-  confirmEmail,
+  requestPasswordReset,
   confirmEmailVerificationCode,
   changePasswordWithEmail,
   refreshToken,
@@ -30,7 +30,7 @@ userRouter.get("/allUsers", getAllUsers);
 userRouter.put("/update/", verifyToken, userEdit);
 userRouter.delete("/deleteAccount", verifyToken, deleteAccount);
 userRouter.put("/changePassword", verifyToken, changePasswordByLoginUser);
-userRouter.post("/confirmEmail", confirmEmail);
+userRouter.post("/requestPasswordReset", requestPasswordReset);
 userRouter.post("/confirmVerificationCode", confirmEmailVerificationCode);
 userRouter.put("/changePasswordWithEmail", changePasswordWithEmail);
 userRouter.put(

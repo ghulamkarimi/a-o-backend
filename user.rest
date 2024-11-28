@@ -64,11 +64,11 @@ Content-Type: application/json
 }
 
 #### confirm email 
-POST http://localhost:7001/user/confirmEmail
+POST http://localhost:7001/user/requestPasswordReset 
 Content-Type: application/json
 
 {
-    "email":"autoservice.aundo@gmail.com"
+    "email":"karimiamirhossein12@gmail.com"
 }
 
 
@@ -78,7 +78,7 @@ Content-Type: application/json
 
 {
     "email":"karimiamirhossein12@gmail.com",
-    "verificationCode":"766075"
+    "verificationCode":"716599"
 
 }
 

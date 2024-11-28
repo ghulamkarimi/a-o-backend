@@ -328,23 +328,72 @@ export const deleteAccount = asyncHandler(async (req, res) => {
 });
 
 
-export const confirmEmail = asyncHandler(async (req, res) => {
+export const requestPasswordReset = asyncHandler(async (req, res) => {
   const { email } = req.body;
+
   const user = await User.findOne({ email });
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("Benutzer nicht gefunden.");
   }
-  if (!user.email) {
-    throw new Error("Email not found");
-  }
-  const verificationCode = Math.floor(100000 + Math.random() * 900000);
-  user.verificationCode = verificationCode.toString();
+
+  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+  const hashedCode = await bcrypt.hash(verificationCode, 10);
+  user.verificationCode = hashedCode;
+  user.verificationCodeExpires = Date.now() + 15 * 60 * 1000; // Ablaufzeit: 15 Minuten
   await user.save();
-  sendVerificationLinkToEmail(user.email, user.firstName, verificationCode);
+  await sendVerificationLinkToEmail(user.email, user.firstName, verificationCode);
+
   res.json({
-    message: "Verification code sent to your email",
-    verificationCode,
-    email,
+    message: "Verifizierungscode wurde an Ihre E-Mail gesendet.",
+  });
+});
+
+
+export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
+  const { email, verificationCode } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw new Error("Benutzer nicht gefunden.");
+  }
+
+  // Sicherstellen, dass ein Code existiert und nicht abgelaufen ist
+  if (!user.verificationCode) {
+    throw new Error("Verifizierungscode fehlt.");
+  }
+
+  if (!user.verificationCodeExpires) {
+    throw new Error("Ablaufzeit des Codes fehlt.");
+  }
+
+  if (Date.now() > user.verificationCodeExpires) {
+    throw new Error("Der Verifizierungscode ist abgelaufen.");
+  }
+
+  // Sicherstellen, dass der `verificationCode` sowohl im Body als auch im User-Objekt vorhanden ist
+  if (!verificationCode) {
+    throw new Error("Verifizierungscode muss angegeben werden.");
+  }
+
+  // Vergleiche den übergebenen `verificationCode` mit dem gespeicherten Hash
+  const isValidCode = await bcrypt.compare(verificationCode, user.verificationCode);
+  if (!isValidCode) {
+    throw new Error("Ungültiger Verifizierungscode.");
+  }
+
+  // Wenn der Code korrekt ist, lösche ihn und markiere den Benutzer als verifiziert
+  user.verificationCode = null;
+  user.verificationCodeExpires = null;
+  user.isAccountVerified = true;
+  await user.save();
+
+  res.json({
+    message: "E-Mail erfolgreich verifiziert.",
+    user: {
+      email: user.email,
+      isAccountVerified: user.isAccountVerified,
+    },
   });
 });
 
@@ -389,32 +438,6 @@ export const changePasswordWithEmail = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error("Fehler beim Ändern des Passworts:", error.message);
     res.status(500).json({ message: "Interner Serverfehler." });
-  }
-});
-
-
-export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
-  const { email, verificationCode } = req.body;
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    throw new Error("User not found");
-  }
-  if (
-    user.verificationCode &&
-    verificationCode.toString() === user.verificationCode.toString()
-  ) {
-    user.verificationCode = "";
-    user.isAccountVerified = true;
-    await user.save();
-    console.log("Verification Code:", user.verificationCode);
-
-    res.json({
-      message: "Email verified successfully",
-      user: user,
-    });
-  } else {
-    throw new Error("Invalid verification code");
   }
 });
 

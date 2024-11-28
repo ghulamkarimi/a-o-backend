@@ -1,47 +1,50 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-const userSchema = mongoose.Schema({
-  firstName: {
-    type: String,
-    required: true,
+const userSchema = mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: true,
+    },
+    lastName: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    phone: {
+      type: String,
+    },
+    profile_photo: {
+      type: String,
+      default:
+        "https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-PNG-Free-File-Download.png",
+    },
+    verificationCodeExpires: {
+      type: Date,
+    },
+    refreshToken: {
+      type: String,
+    },
+    isAccountVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationCode: {
+      type: String,
+    },
   },
-  lastName: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  isAdmin: {
-    type: Boolean,
-    default: false,
-  },
-  phone: {
-    type: String,
-    
-  },
-  profile_photo: {
-    type: String,
-    default: "https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-PNG-Free-File-Download.png",
-  },
-  
-  refreshToken: {
-    type: String,
-  },
-  isAccountVerified:{
-    type: Boolean,
-    default: false,
-  },
-  verificationCode :{
-    type: String,
-  },
-},
   { timestamps: true }
 );
 
