@@ -38,8 +38,7 @@ export const createAppointment = asyncHandler(async (req, res) => {
     year: "numeric",
     month: "long",
     day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
+ 
   });
 
   const mailOptions = {
@@ -102,8 +101,7 @@ export const confirmAppointment = asyncHandler(async (req, res) => {
         year: "numeric",
         month: "long",
         day: "numeric",
-        hour: "numeric",
-        minute: "numeric",
+   
       }
     );
 
@@ -177,8 +175,7 @@ export const showConfirmationPage = asyncHandler(async (req, res) => {
     year: "numeric",
     month: "long",
     day: "numeric",
-    hour: "numeric",
-    minute: "numeric",
+ 
   });
 
   return res.status(200).send(`
