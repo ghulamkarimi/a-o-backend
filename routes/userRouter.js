@@ -28,7 +28,7 @@ userRouter.delete("/logout", userLogout);
 userRouter.get("/refreshToken", refreshToken);
 userRouter.get("/allUsers", getAllUsers);
 userRouter.put("/update/", verifyToken, userEdit);
-userRouter.delete("/deleteUser/:id", verifyToken, deleteAccount);
+userRouter.delete("/deleteAccount", verifyToken, deleteAccount);
 userRouter.put("/changePassword", verifyToken, changePasswordByLoginUser);
 userRouter.post("/confirmEmail", confirmEmail);
 userRouter.post("/confirmVerificationCode", confirmEmailVerificationCode);
