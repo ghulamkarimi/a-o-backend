@@ -92,8 +92,7 @@ Content-Type: application/json
     "confirmPassword": "amir.12345"
 }
 
-#### profile image
-POST http://localhost:7001/user/uploadProfileImage
+
 
 
 

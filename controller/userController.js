@@ -6,6 +6,7 @@ import { sendVerificationLinkToEmail } from "../email/mailSender.js";
 import fs from "fs";
 import path from "path";
 import nodemailer from "nodemailer";
+import bcrypt from "bcrypt";
 
 export const userRegister = asyncHandler(async (req, res) => {
   const {
@@ -347,26 +348,50 @@ export const confirmEmail = asyncHandler(async (req, res) => {
   });
 });
 
+
+
 export const changePasswordWithEmail = asyncHandler(async (req, res) => {
   const { email, newPassword, confirmPassword } = req.body;
+
+  if (!email || !newPassword || !confirmPassword) {
+    return res.status(400).json({ message: "Alle Felder sind erforderlich." });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ message: "Die Passwörter stimmen nicht überein." });
+  }
+
+  // Passwort-Sicherheitsüberprüfung (optional)
+  const passwordStrengthRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/;
+  if (!passwordStrengthRegex.test(newPassword)) {
+    return res.status(400).json({
+      message:
+        "Das Passwort muss mindestens 8 Zeichen lang sein und mindestens einen Großbuchstaben, einen Kleinbuchstaben und eine Zahl enthalten.",
+    });
+  }
+
   const user = await User.findOne({ email });
   if (!user) {
-    throw new Error("User not found");
+    return res.status(404).json({ message: "Benutzer nicht gefunden." });
   }
-  if (user) {
-    if (newPassword !== confirmPassword) {
-      throw new Error("Password does not match");
-    }
-    user.password = newPassword;
+
+  try {
+    // Neues Passwort hashen
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Passwort aktualisieren und speichern
+    user.password = hashedPassword;
     await user.save();
-    res.json({
-      message: "Password changed successfully",
-      user: user,
+
+    res.status(200).json({
+      message: "Passwort erfolgreich geändert.",
     });
-  } else {
-    throw new Error("Invalid credentials");
+  } catch (error) {
+    console.error("Fehler beim Ändern des Passworts:", error.message);
+    res.status(500).json({ message: "Interner Serverfehler." });
   }
 });
+
 
 export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
   const { email, verificationCode } = req.body;
