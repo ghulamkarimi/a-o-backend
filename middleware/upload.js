@@ -66,7 +66,7 @@ export const uploadMiddleware = (req, res, next) => {
   if (route === 'buy') {
     multerInstance = multer({
       storage,
-      limits: { fileSize: 10 * 1024 * 1024 }, // Max. 10 MB pro Datei
+      limits: { fileSize: 7 * 1024 * 1024 }, // Max. 10 MB pro Datei
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.startsWith('image/')) {
           return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
@@ -77,7 +77,7 @@ export const uploadMiddleware = (req, res, next) => {
   } else if (route === 'rent') {
     multerInstance = multer({
       storage,
-      limits: { fileSize: 5 * 1024 * 1024 }, // Max. 5 MB pro Datei
+      limits: { fileSize: 3 * 1024 * 1024 }, // Max. 5 MB pro Datei
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.startsWith('image/')) {
           return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
@@ -88,7 +88,7 @@ export const uploadMiddleware = (req, res, next) => {
   } else if (route === 'user') {
     multerInstance = multer({
       storage,
-      limits: { fileSize: 15 * 1024 * 1024 }, // Max. 5 MB pro Datei
+      limits: { fileSize: 5 * 1024 * 1024 }, // Max. 5 MB pro Datei
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.startsWith('image/')) {
           return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
@@ -99,7 +99,7 @@ export const uploadMiddleware = (req, res, next) => {
   } else if (route === 'offer') {
     multerInstance = multer({
       storage,
-      limits: { fileSize: 10 * 1024 * 1024 }, // Max. 15 MB pro Datei
+      limits: { fileSize: 5 * 1024 * 1024 }, // Max. 15 MB pro Datei
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.startsWith('image/')) {
           return cb(new Error('Nur Bilddateien sind erlaubt!'), false);
