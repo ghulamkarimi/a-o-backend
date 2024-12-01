@@ -8,7 +8,7 @@ Content-Type: application/json
     "oldPrice":"120",
     "newPrice":"75",
     "imageUrl":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRSZNbZId4DLbjraJ5qbzEtfQF5xx1fmu4CQ&s",
-    "userId": "6746413a50dac6933deb044e"
+    "userId": "674b6401acf7065df0f5baac"
 }
 
 #### edit Offer
@@ -31,8 +31,8 @@ DELETE http://localhost:7001/offer/deleteOffer
 Content-Type: application/json
 
 {
-    "offerId": "672a05ec831f318888ecc13f",
-    "userId": "6728c1b4b847d4c2fd433414"
+    "offerId": "674b9c1d07972446b53f80a2",
+    "userId": "674b6401acf7065df0f5baac"
 }
 
 #### get all Offers

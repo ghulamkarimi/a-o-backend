@@ -69,6 +69,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
 
     const createdCarBuy = await carBuy.save();
     res.status(201).json(createdCarBuy);
+    req.io.emit('carBuyCreated', createdCarBuy); // WebSocket-Benachrichtigung senden
   } catch (error) {
     console.error('Fehler in createBuyCar:', error.message);
     res.status(400).json({ message: error.message });
@@ -129,6 +130,7 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
     await CarBuy.findByIdAndDelete(carId);
 
     res.status(200).json({ message: 'Fahrzeug und zugehörige Bilder erfolgreich gelöscht' });
+    req.io.emit('carBuyDeleted', carId); // WebSocket-Benachrichtigung senden
   } catch (error) {
     console.error('Fehler beim Löschen des Fahrzeugs:', error.message);
     res.status(500).json({ message: 'Fehler beim Löschen des Fahrzeugs' });
@@ -157,8 +159,8 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
 
     // **Alte Bilder löschen**
     carBuy.carImages.forEach((imageUrl) => {
-      const relativePath = imageUrl.replace(`${baseUrl}/`, ''); // Relativen Pfad extrahieren
-      const localPath = path.join(process.cwd(), relativePath); // Absoluten Pfad erstellen
+      const relativePath = imageUrl.replace(`${baseUrl}/`, ''); 
+      const localPath = path.join(process.cwd(), relativePath); 
       if (fs.existsSync(localPath)) {
         fs.unlinkSync(localPath);
         console.log(`Gelöschte Datei: ${localPath}`);
@@ -178,6 +180,7 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
 
     const updatedCarBuy = await carBuy.save();
     res.status(200).json(updatedCarBuy);
+    req.io.emit('carBuyUpdated', updatedCarBuy); 
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Fahrzeugs:', error.message);
     res.status(500).json({ message: 'Fehler beim Aktualisieren des Fahrzeugs' });

@@ -26,7 +26,7 @@ Content-Type: application/json
     "carMotor": "2.0L",
     "carHorsePower": "150",
     "carTechnicalInspection": "2024-10-01",
-    "userId": "6728c1b4b847d4c2fd433414"
+    "userId": "674b6401acf7065df0f5baac"
 }
 
 #### get all Car Buy
@@ -39,8 +39,8 @@ DELETE http://localhost:7001/buy/delete/
 Content-Type: application/json
 
 {
-    "carId": "6741de34797ddf9990dfb62e",
-    "userId": "6728c1b4b847d4c2fd433414"
+    "carId": "674b7b66badc9508b78b0dad",
+    "userId": "674b6401acf7065df0f5baac"
 }
 
 #### update Car Buy
