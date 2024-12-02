@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import asyncHandler from "express-async-handler";
 
 
+
 // 1. Slots generieren
 export const generateSlots = async (req, res) => {
   const { date } = req.body; // Beispiel: "2024-12-04"
@@ -89,49 +90,58 @@ export const bookSlot = async (req, res) => {
 
 // 4. Slot blockieren oder freigeben
 export const updateSlotStatus = async (req, res) => {
-  const { slotId } = req.params;
-  const { status } = req.body;
+  const { slotId } = req.params; // Slot-ID aus den URL-Parametern
+  const { status } = req.body; // Neuer Status aus dem Anfrage-Body
 
   try {
-    // Slot suchen
+    // 1. Slot anhand der ID suchen
     const slot = await AppointmentSlot.findById(slotId);
 
-    // Slot-Existenz prüfen
+    // 2. Überprüfen, ob der Slot existiert
     if (!slot) {
-      console.error(`Slot mit ID ${slotId} nicht gefunden.`);
+      console.error(`❌ Slot mit ID ${slotId} wurde nicht gefunden.`);
       return res.status(404).json({ message: "Slot nicht gefunden" });
     }
 
-    // Status validieren
-    if (!["available", "blocked"].includes(status)) {
-      console.error(`Ungültiger Status: ${status}`);
+    // 3. Validieren, ob der neue Status erlaubt ist
+    const validStatuses = ["available", "blocked", "booked", "confirmed"];
+    if (!validStatuses.includes(status)) {
+      console.error(`❌ Ungültiger Status: ${status}`);
       return res.status(400).json({ message: "Ungültiger Status" });
     }
 
-    // Status aktualisieren
+    // 4. Slot-Status aktualisieren
     slot.status = status;
     await slot.save();
 
-    // WebSocket-Benachrichtigung senden
+    // 5. WebSocket-Update senden, wenn die Instanz existiert
     const io = req.app.get("io");
     if (io) {
       io.emit("slotUpdated", {
         slotId: slot._id,
         status: slot.status,
       });
-      console.log(`WebSocket-Event 'slotUpdated' gesendet für Slot ${slot._id}`);
+      console.log(`✅ WebSocket-Event 'slotUpdated' gesendet für Slot ID: ${slot._id}`);
+    } else {
+      console.warn("⚠️ WebSocket-Instanz ist nicht verfügbar.");
     }
 
+    // 6. Erfolgreiche Antwort an den Client senden
     res.status(200).json({
-      message: `Slot wurde ${status}`,
+      message: `Slot wurde erfolgreich auf ${status} aktualisiert.`,
       slotId: slot._id,
       status: slot.status,
     });
   } catch (error) {
-    console.error("Fehler beim Aktualisieren des Slots:", error.message);
-    res.status(500).json({ message: "Fehler beim Aktualisieren des Slots", error: error.message });
+    // 7. Fehler behandeln und Rückmeldung an den Client
+    console.error("❌ Fehler beim Aktualisieren des Slots:", error.message);
+    res.status(500).json({
+      message: "Interner Fehler beim Aktualisieren des Slots",
+      error: error.message,
+    });
   }
 };
+
 
 
 
