@@ -5,7 +5,7 @@ import userRouter from './routes/userRouter.js';
 import carRentRouter from './routes/carRentRouter.js';
 import carBuyRouter from './routes/carBuyRouter.js';
 import offerRouter from './routes/offerRouter.js';
-import appointmentRouter from './routes/appointmentRouter.js';
+import appointmentSlotRoutes from './routes/appointmentRouter.js';
 import paymentRouter from './routes/paymentRouter.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -52,7 +52,7 @@ app.use("/rent", carRentRouter);
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use("/buy", carBuyRouter);
 app.use("/offer", offerRouter);
-app.use("/appointment", appointmentRouter);
+app.use("/appointment", appointmentSlotRoutes);
 app.use("/payment", paymentRouter);
 app.use("/schutzPacket", schutzPacketRouter);
 

@@ -1,33 +1,48 @@
-#### email 
-POST http://localhost:7001/appointment
+ POST http://localhost:7001/appointment/generate
 Content-Type: application/json
 
 {
-    "service": "sonstiges",
-    "date": "2024-08-11",
-    "fullName": "Ghulam Karimi",
-    "email": "karimiamirhossein12@gmail.com",
-    "phone": "1707407417",
-    "notes": "Ich habe ein Problem mit meinem Auto wann willst du es reparieren",
-    "licensePlate": "KH F 2020"
-
+  "date": "2024-12-02",
+  "slotsPerHour": 2
 }
-#### termin bestätigen
-PUT  http://localhost:7001/appointment/673119ce1b77c3fc4da90568/confirm
-Content-Type: application/json
 
-#### alle Termine anzeigen
-GET http://localhost:7001/appointment/getAll
-Content-Type: application/json
+#### Get All Appointments
+GET http://localhost:7001/appointment
 
-#### Termin löschen
-DELETE http://localhost:7001/appointment/delete
+#### blockieren
+PATCH http://localhost:7001/appointment/674d3b06ef9705a489951948
 Content-Type: application/json
 
 {
-    "userId": "6728c1b4b847d4c2fd433414",
-    "appointmentId": "6731c4d2e0af72d40e580f90"
+  "status": "blocked"
 }
+
+#### unblockieren
+PATCH http://localhost:7001/appointment/674d3b06ef9705a489951948
+Content-Type: application/json
+
+{
+  "status": "available"
+}
+
+#### Buchen
+POST http://localhost:7001/appointment/book
+Content-Type: application/json
+
+{
+  "slotId": "{slotId}",
+  "customerDetails": {
+    "fullName": "Max Mustermann",
+    "email": "max@mustermann.de",
+    "phone": "+4915123456789",
+    "licensePlate": "M-XX 1234",
+    "notes": "Bitte pünktlich kommen"
+  }
+}
+
+#### bestätigen
+PATCH http://localhost:7001/appointment/674d3b06ef9705a489951948/confirm
+
 
 
 
