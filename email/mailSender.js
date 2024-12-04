@@ -61,3 +61,73 @@ export const sendVerificationLinkToEmail = async (
     throw new Error("Fehler beim Senden der Verifikations-E-Mail.");
   }
 };
+
+export const appointmentConfirmationEmail = async (
+  email,
+  firstName,
+  lastName,
+  date,
+  time,
+  service,
+  licensePlate,
+  hsn,
+  tsn
+) => {
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: "Terminbestätigung",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; background-color: #f9f9f9; border-radius: 10px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);">
+        <div style="padding: 20px; background-color: #007bff; border-top-left-radius: 10px; border-top-right-radius: 10px; text-align: center;">
+          <h1 style="color: #ffffff; font-size: 24px; margin: 0;">A und O</h1>
+        </div>
+        <div style="padding: 20px;">
+          <h2 style="font-size: 20px; color: #333;">Hallo ${firstName} ${lastName},</h2>
+          <p style="font-size: 16px; color: #555; line-height: 1.6;">
+            Ihr Termin wurde erfolgreich bestätigt. Hier sind die Details:
+          </p>
+          <ul style="list-style: none; padding: 0;">
+            <li style="margin: 10px 0;">
+              <strong>Datum:</strong> ${date}
+            </li>
+            <li style="margin: 10px 0;">
+              <strong>Uhrzeit:</strong> ${time}
+            </li>
+            <li style="margin: 10px 0;">
+              <strong>Service:</strong> ${service}
+            </li>
+            <li style="margin: 10px 0;">
+              <strong>Kennzeichen:</strong> ${licensePlate}
+            </li>
+            <li style="margin: 10px 0;">
+              <strong>HSN:</strong> ${hsn}
+            </li>
+            <li style="margin: 10px 0;">
+              <strong>TSN:</strong> ${tsn}
+            </li>
+          </ul>
+          <p style="font-size: 16px; color: #555; line-height: 1.6;">
+            Wir freuen uns darauf, Sie zu sehen!
+          </p>
+          <div style="text-align: center; margin-top: 30px;"> 
+            <a href="#" style="text-decoration: none; background-color: #007bff; color: #ffffff; padding: 10px 20px; font-size: 16px; border-radius: 5px; display: inline-block; box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);">Termin ändern</a>
+          </div>
+        </div>
+        <div style="padding: 10px; background-color: #f1f1f1; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; text-align: center;">
+          <p style="font-size: 12px; color: #999; margin: 0;">
+            &copy; 2024 A und O. Alle Rechte vorbehalten.
+          </p>
+        </div>
+      </div>
+    `,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Verifikations-E-Mail wurde erfolgreich gesendet.");
+  } catch (error) {
+    console.error("Fehler beim Senden der Verifikations-E-Mail:", error);
+    throw new Error("Fehler beim Senden der Verifikations-E-Mail.");
+  }
+};

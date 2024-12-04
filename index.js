@@ -5,7 +5,6 @@ import userRouter from './routes/userRouter.js';
 import carRentRouter from './routes/carRentRouter.js';
 import carBuyRouter from './routes/carBuyRouter.js';
 import offerRouter from './routes/offerRouter.js';
-import appointmentSlotRoutes from './routes/appointmentRouter.js';
 import paymentRouter from './routes/paymentRouter.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -15,6 +14,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http'; // Hier importierst du createServer für HTTP
 import initializeSocket from './socket/socket.js'; // Importiere die `initializeSocket`-Funktion
+import appointmentRouter from './routes/appointmentRouter.js';
 
 
 dotenv.config();
@@ -52,7 +52,7 @@ app.use("/rent", carRentRouter);
 app.use('/images', express.static(path.join(__dirname, 'images')));
 app.use("/buy", carBuyRouter);
 app.use("/offer", offerRouter);
-app.use("/appointment", appointmentSlotRoutes);
+app.use("/appointment", appointmentRouter)
 app.use("/payment", paymentRouter);
 app.use("/schutzPacket", schutzPacketRouter);
 

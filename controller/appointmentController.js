@@ -1,189 +1,149 @@
-import AppointmentSlot from "../models/appointmentModel.js";
-import nodemailer from "nodemailer";
+import Appointment from "../models/appointmentModel.js";
 import asyncHandler from "express-async-handler";
+import { appointmentConfirmationEmail } from "../email/mailSender.js";
 
-
-
-// 1. Slots generieren
-export const generateSlots = async (req, res) => {
-  const { date } = req.body; // Beispiel: "2024-12-04"
-  const startTime = new Date(`${date}T08:00:00`); // Startzeit: 08:00 Uhr
-  const endTime = new Date(`${date}T18:00:00`); // Endzeit: 18:00 Uhr
-
-  const slots = [];
-  let currentTime = startTime;
-
-  while (currentTime < endTime) {
-    const nextTime = new Date(currentTime);
-    nextTime.setMinutes(nextTime.getMinutes() + 90); // 1,5 Stunden Intervalle
-
-    slots.push({
-      date: currentTime,
-      status: "available",
-    });
-
-    currentTime = nextTime;
-  }
-
+export const createAppointment = async (req, res) => {
   try {
-    const createdSlots = await AppointmentSlot.insertMany(slots);
-    res.status(201).json({ message: "Slots erfolgreich generiert", createdSlots });
-  } catch (error) {
-    res.status(500).json({ message: "Fehler beim Generieren der Slots", error });
+    const {
+      date,
+      time,
+      firstName,
+      lastName,
+      licensePlate,
+      email,
+      phone,
+      service,
+      comment,
+      hsn,
+      tsn,
+    } = req.body;
+    let appointment = await Appointment.findOne({ date, time });
+
+    if (appointment && appointment.isBookedOrBlocked) {
+      return res.status(400).send("Termin ist bereits gebucht oder blockiert.");
+    }
+
+    if (!appointment) {
+      // Wenn kein Termin vorhanden ist, erstelle einen neuen
+      appointment = new Appointment({
+        date,
+        time,
+        firstName,
+        lastName,
+        licensePlate,
+        email,
+        phone,
+        service,
+        comment,
+        hsn,
+        tsn,
+        isBookedOrBlocked: true,
+      });
+    } else {
+      // Falls der Termin vorhanden und verfügbar ist, aktualisiere ihn
+      appointment.firstName = firstName;
+      appointment.lastName = lastName;
+      appointment.licensePlate = licensePlate;
+      appointment.email = email;
+      appointment.phone = phone;
+      appointment.service = service;
+      appointment.comment = comment;
+      appointment.hsn = hsn;
+      appointment.tsn = tsn;
+      appointment.isBookedOrBlocked = true;
+    }
+
+    await appointment.save();
+    try {
+        await appointmentConfirmationEmail(
+          email,
+          firstName,
+          lastName,
+          date,
+          time,
+          service,
+          licensePlate,
+          hsn,
+          tsn
+        );
+      } catch (error) {
+        console.error("Fehler beim Senden der Terminbestätigungs-E-Mail:", error);
+      }
+    res.status(201).json(appointment);
+  } catch (err) {
+    res.status(500).send("Fehler beim Buchen des Termins");
   }
 };
 
-// 2. Alle Slots abrufen
-export const getSlots = asyncHandler(async (req, res) => {
+export const getAllAppointments = asyncHandler(async (req, res) => {
   try {
-      const slots = await AppointmentSlot.find();
-      res.json(slots);
-  } catch (error) {
-      console.error("Fehler beim Abrufen der Slots:", error);
-      res.status(500).json({ message: "Fehler beim Abrufen der Slots", error: error.message });
+    const appointments = await Appointment.find();
+    res.json(appointments);
+  } catch (err) {
+    res.status(500).json({ message: "Fehler beim Abrufen der Termine" });
   }
 });
 
-
-// 3. Slot buchen
-export const bookSlot = async (req, res) => {
-  const { slotId, customerDetails } = req.body;
-
+export const cancelAppointment = asyncHandler(async (req, res) => {
   try {
-    const slot = await AppointmentSlot.findById(slotId);
+    const { appointmentId } = req.body;
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment || !appointment.isBookedOrBlocked)
+      return res
+        .status(400)
+        .send("Termin nicht gefunden oder bereits freigegeben");
 
-    if (!slot || slot.status !== "available") {
-      return res.status(400).json({ message: "Slot nicht verfügbar" });
-    }
-
-    slot.status = "booked";
-    slot.customerDetails = customerDetails;
-    await slot.save();
-
-    // Bestätigungs-E-Mail senden
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASS_MAIL,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: customerDetails.email,
-      subject: "Terminbestätigung",
-      html: `
-        <h1>Terminbestätigung</h1>
-        <p>Ihr Termin für den Service <strong>${slot.service}</strong> wurde erfolgreich gebucht.</p>
-        <p>Datum und Zeit: ${new Date(slot.date).toLocaleString()}</p>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    res.status(200).json({ message: "Slot gebucht und Bestätigungs-E-Mail gesendet", slot });
-  } catch (error) {
-    res.status(500).json({ message: "Fehler beim Buchen des Slots", error });
+    await Appointment.findByIdAndDelete(appointmentId);
+    res.status(200).send("Termin erfolgreich gelöscht");
+  } catch (err) {
+    res.status(500).send("Fehler beim Stornieren des Termins");
   }
-};
+});
 
-// 4. Slot blockieren oder freigeben
-export const updateSlotStatus = async (req, res) => {
-  const { slotId } = req.params; // Slot-ID aus den URL-Parametern
-  const { status } = req.body; // Neuer Status aus dem Anfrage-Body
-
+export const blockAppointment = asyncHandler(async (req, res) => {
   try {
-    // 1. Slot anhand der ID suchen
-    const slot = await AppointmentSlot.findById(slotId);
+    const { date, time } = req.body;
 
-    // 2. Überprüfen, ob der Slot existiert
-    if (!slot) {
-      console.error(`❌ Slot mit ID ${slotId} wurde nicht gefunden.`);
-      return res.status(404).json({ message: "Slot nicht gefunden" });
+    // Convert date to Date object to ensure consistency
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ message: "Ungültiges Datumsformat" });
     }
 
-    // 3. Validieren, ob der neue Status erlaubt ist
-    const validStatuses = ["available", "blocked", "booked", "confirmed"];
-    if (!validStatuses.includes(status)) {
-      console.error(`❌ Ungültiger Status: ${status}`);
-      return res.status(400).json({ message: "Ungültiger Status" });
-    }
-
-    // 4. Slot-Status aktualisieren
-    slot.status = status;
-    await slot.save();
-
-    // 5. WebSocket-Update senden, wenn die Instanz existiert
-    const io = req.app.get("io");
-    if (io) {
-      io.emit("slotUpdated", {
-        slotId: slot._id,
-        status: slot.status,
+    let appointment = await Appointment.findOne({ date: parsedDate, time });
+    if (!appointment) {
+      appointment = new Appointment({
+        date: parsedDate,
+        time,
+        isBookedOrBlocked: true,
       });
-      console.log(`✅ WebSocket-Event 'slotUpdated' gesendet für Slot ID: ${slot._id}`);
+    } else if (appointment.isBookedOrBlocked) {
+      return res
+        .status(400)
+        .json({ message: "Termin ist bereits gebucht oder blockiert" });
     } else {
-      console.warn("⚠️ WebSocket-Instanz ist nicht verfügbar.");
+      appointment.isBookedOrBlocked = true;
     }
-
-    // 6. Erfolgreiche Antwort an den Client senden
-    res.status(200).json({
-      message: `Slot wurde erfolgreich auf ${status} aktualisiert.`,
-      slotId: slot._id,
-      status: slot.status,
-    });
-  } catch (error) {
-    // 7. Fehler behandeln und Rückmeldung an den Client
-    console.error("❌ Fehler beim Aktualisieren des Slots:", error.message);
-    res.status(500).json({
-      message: "Interner Fehler beim Aktualisieren des Slots",
-      error: error.message,
-    });
+    await appointment.save();
+    res.status(201).json(appointment);
+  } catch (err) {
+    console.error("Fehler beim Blockieren des Termins:", err);
+    res.status(500).json({ message: "Fehler beim Blockieren des Termins" });
   }
-};
+});
 
-
-
-
-// 5. Gebuchten Slot bestätigen
-export const confirmSlot = async (req, res) => {
-  const { slotId } = req.params;
-
+export const unblockAppointment = asyncHandler(async (req, res) => {
   try {
-    const slot = await AppointmentSlot.findById(slotId);
+    const { appointmentId } = req.body;
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment || !appointment.isBookedOrBlocked)
+      return res
+        .status(400)
+        .send("Termin nicht gefunden oder bereits freigegeben");
 
-    if (!slot || slot.status !== "booked") {
-      return res.status(400).json({ message: "Slot kann nicht bestätigt werden" });
-    }
-
-    slot.status = "confirmed";
-    await slot.save();
-
-    // Bestätigungs-E-Mail an den Kunden senden
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL,
-        pass: process.env.PASS_MAIL,
-      },
-    });
-
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: slot.customerDetails.email,
-      subject: "Termin bestätigt",
-      html: `
-        <h1>Termin bestätigt</h1>
-        <p>Ihr Termin wurde erfolgreich bestätigt.</p>
-        <p>Datum und Zeit: ${new Date(slot.date).toLocaleString()}</p>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-
-    res.status(200).json({ message: "Slot bestätigt und E-Mail gesendet", slot });
-  } catch (error) {
-    res.status(500).json({ message: "Fehler beim Bestätigen des Slots", error });
+    await Appointment.findByIdAndDelete(appointmentId);
+    res.send("Termin erfolgreich freigegeben");
+  } catch (err) {
+    res.status(500).send("Fehler beim Freigeben des Termins");
   }
-};
-
+});

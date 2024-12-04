@@ -1,48 +1,47 @@
- POST http://localhost:7001/appointment/generate
+#### create appointment
+POST http://localhost:7001/appointment/create
 Content-Type: application/json
 
 {
-  "date": "2024-12-02",
-  "slotsPerHour": 2
+   "firstName": "Ghulam",
+   "lastName": "Karimi",
+   "email": "karimiamirhossein12@gmail.com",
+   "phone": "1234567890",
+   "date": "2024-12-05",
+   "time": "12:00",
+   "licensePlate": "1234",
+   "service": "Oil Change",
+   "comment": "Please change the oil",
+   "hsn": "1234",
+    "tsn": "abcd"
 }
 
-#### Get All Appointments
-GET http://localhost:7001/appointment
-
-#### blockieren
-PATCH http://localhost:7001/appointment/674d3b06ef9705a489951948
+#### cancel appointment
+POST http://localhost:7001/appointment/cancel
 Content-Type: application/json
 
 {
-  "status": "blocked"
+   "appointmentId": "674f7c4b4c5553fa8c58e3e8"
 }
 
-#### unblockieren
-PATCH http://localhost:7001/appointment/674d3b06ef9705a489951948
+#### block appointment
+POST http://localhost:7001/appointment/block
 Content-Type: application/json
 
 {
-  "status": "available"
+  "date": "2024-12-06",
+  "time": "13:30"
 }
 
-#### Buchen
-POST http://localhost:7001/appointment/book
+#### unblock appointment
+DELETE http://localhost:7001/appointment/unblock
 Content-Type: application/json
 
 {
-  "slotId": "{slotId}",
-  "customerDetails": {
-    "fullName": "Max Mustermann",
-    "email": "max@mustermann.de",
-    "phone": "+4915123456789",
-    "licensePlate": "M-XX 1234",
-    "notes": "Bitte pünktlich kommen"
-  }
+  "appointmentId": "674f78824c1561ab57acfb63"
 }
 
-#### bestätigen
-PATCH http://localhost:7001/appointment/674d3b06ef9705a489951948/confirm
-
-
-
+#### get all appointments
+GET http://localhost:7001/appointment/all
+Content-Type: application/json
 
