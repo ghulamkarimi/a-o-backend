@@ -6,7 +6,7 @@ const appointmentRouter = express.Router();
 // User routes
 
 appointmentRouter.post('/create',createAppointment);
-appointmentRouter.post("/cancel", cancelAppointment)
+appointmentRouter.get("/cancel/:appointmentId", cancelAppointment)
 
 
 // Admin routes

@@ -16,13 +16,7 @@ Content-Type: application/json
     "tsn": "abcd"
 }
 
-#### cancel appointment
-POST http://localhost:7001/appointment/cancel
-Content-Type: application/json
-
-{
-   "appointmentId": "674f7c4b4c5553fa8c58e3e8"
-}
+ 
 
 #### block appointment
 POST http://localhost:7001/appointment/block
@@ -38,10 +32,12 @@ DELETE http://localhost:7001/appointment/unblock
 Content-Type: application/json
 
 {
-  "appointmentId": "674f78824c1561ab57acfb63"
+  "appointmentId": "6750dc59360ec3cd5edaf8ff"
 }
 
 #### get all appointments
 GET http://localhost:7001/appointment/all
 Content-Type: application/json
+
+
 
