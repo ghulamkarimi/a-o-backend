@@ -15,6 +15,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http'; // Hier importierst du createServer für HTTP
 import initializeSocket from './socket/socket.js'; // Importiere die `initializeSocket`-Funktion
+import reservationRouter from './routes/reservationRouter.js';
 
 
 dotenv.config();
@@ -55,6 +56,7 @@ app.use("/offer", offerRouter);
 app.use("/appointment", appointmentSlotRoutes);
 app.use("/payment", paymentRouter);
 app.use("/schutzPacket", schutzPacketRouter);
+app.use("/reservation",reservationRouter)
 
 // Starte den Server
 const PORT = process.env.PORT || 5001;
