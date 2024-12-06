@@ -76,7 +76,6 @@ export const userLogin = asyncHandler(async (req, res) => {
     userFound.refreshToken = refreshToken;
     await userFound.save();
 
-  
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -155,13 +154,13 @@ export const refreshToken = async (req, res) => {
         isAdmin: user.isAdmin,
       },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "15m" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
+      { expiresIn: "10m" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
     );
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 5000, 
+      maxAge: 5000,
       sameSite: "strict",
     });
 
@@ -170,7 +169,6 @@ export const refreshToken = async (req, res) => {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 };
-
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
@@ -230,30 +228,31 @@ export const changePasswordByLoginUser = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 export const deleteAccount = asyncHandler(async (req, res) => {
   const userId = req.userId;
 
   if (!userId) {
     return res.status(401).json({ message: "Authentifizierung erforderlich." });
   }
-
   try {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "Benutzer nicht gefunden." });
     }
 
+    // Profilbild löschen, falls vorhanden
     if (user.profile_photo && !user.profile_photo.includes("default_avatar_url")) {
       const relativePath = user.profile_photo.split(`${req.protocol}://${req.get("host")}/`)[1];
-      const filePath = path.join(process.cwd(), relativePath);
-    
-      try {
-        await fs.unlink(filePath); // Verwende die Promises-API
-        console.log(`Profilbild gelöscht: ${filePath}`);
-      } catch (err) {
-        console.error("Fehler beim Löschen des Profilbildes:", err.message);
+      if (relativePath) {
+        const filePath = path.join(process.cwd(), relativePath);
+
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            console.error("Fehler beim Löschen des Profilbildes:", err.message);
+          } else {
+            console.log(`Profilbild gelöscht: ${filePath}`);
+          }
+        });
       }
     }
 
@@ -265,13 +264,14 @@ export const deleteAccount = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      path: "/", // Gleicher Pfad wie beim Setzen des Cookies
     });
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      path: "/refresh",
+      path: "/refresh", // Gleicher Pfad wie beim Setzen des Cookies
     });
 
     res.status(200).json({
@@ -284,7 +284,6 @@ export const deleteAccount = asyncHandler(async (req, res) => {
 });
 
 
-
 export const requestPasswordReset = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
@@ -293,19 +292,24 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
     throw new Error("Benutzer nicht gefunden.");
   }
 
-  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const verificationCode = Math.floor(
+    100000 + Math.random() * 900000
+  ).toString();
 
   const hashedCode = await bcrypt.hash(verificationCode, 10);
   user.verificationCode = hashedCode;
   user.verificationCodeExpires = Date.now() + 15 * 60 * 1000; // Ablaufzeit: 15 Minuten
   await user.save();
-  await sendVerificationLinkToEmail(user.email, user.firstName, verificationCode);
+  await sendVerificationLinkToEmail(
+    user.email,
+    user.firstName,
+    verificationCode
+  );
 
   res.json({
     message: "Verifizierungscode wurde an Ihre E-Mail gesendet.",
   });
 });
-
 
 export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
   const { email, verificationCode } = req.body;
@@ -334,7 +338,10 @@ export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
   }
 
   // Vergleiche den übergebenen `verificationCode` mit dem gespeicherten Hash
-  const isValidCode = await bcrypt.compare(verificationCode, user.verificationCode);
+  const isValidCode = await bcrypt.compare(
+    verificationCode,
+    user.verificationCode
+  );
   if (!isValidCode) {
     throw new Error("Ungültiger Verifizierungscode.");
   }
@@ -354,8 +361,6 @@ export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
   });
 });
 
-
-
 export const changePasswordWithEmail = asyncHandler(async (req, res) => {
   const { email, newPassword, confirmPassword } = req.body;
 
@@ -364,7 +369,9 @@ export const changePasswordWithEmail = asyncHandler(async (req, res) => {
   }
 
   if (newPassword !== confirmPassword) {
-    return res.status(400).json({ message: "Die Passwörter stimmen nicht überein." });
+    return res
+      .status(400)
+      .json({ message: "Die Passwörter stimmen nicht überein." });
   }
 
   // Passwort-Sicherheitsüberprüfung (optional)
@@ -405,7 +412,9 @@ export const profilePhotoUpload = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Keine Datei hochgeladen" });
   }
 
-  const filePath = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
+  const filePath = `${req.protocol}://${req.get(
+    "host"
+  )}/${req.file.path.replace(/\\/g, "/")}`;
   try {
     const user = await User.findById(userId);
     if (!user) {
