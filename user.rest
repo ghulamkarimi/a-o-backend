@@ -3,12 +3,12 @@ POST http://localhost:7001/user/register
 Content-Type: application/json
 
 {
-    "firstName":"Hassan",
-    "lastName":"",
-    "email":"Bill2@gmail.com",
-    "password":"123456",
-    "confirmPassword":"123456",
-    "phone":"1234567" 
+    "firstName":"Hossein",
+    "lastName":"Karimi",
+    "email":"hossein12@gmail.com",
+    "password":"amir.2020",
+    "confirmPassword":"amir.2020",
+    "phone":"01522364566" 
 }
 
 #### login User

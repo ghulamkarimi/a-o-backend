@@ -7,6 +7,25 @@ import fs from "fs";
 import path from "path";
 import bcrypt from "bcrypt";
 
+
+export const generateUniqueCustomerNumber = async () => {
+  let isUnique = false;
+  let customerNumber;
+
+  while (!isUnique) {
+    // Generiere zufällige 6-stellige Nummer
+    customerNumber = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const existingUser = await User.findOne({ customerNumber });
+
+    if (!existingUser) {
+      isUnique = true;
+    }
+  }
+
+  return customerNumber;
+};
+
+
 export const userRegister = asyncHandler(async (req, res) => {
   const {
     firstName,
@@ -16,6 +35,7 @@ export const userRegister = asyncHandler(async (req, res) => {
     password,
     confirmPassword,
     phone,
+  
   } = req.body;
   const userExist = await User.findOne({ email });
 
@@ -23,6 +43,7 @@ export const userRegister = asyncHandler(async (req, res) => {
     if (userExist) throw new Error("User Already Exist");
     if (password !== confirmPassword)
       throw new Error("Password does not match");
+    const customerNumber = await generateUniqueCustomerNumber();
     const user = await User.create({
       firstName,
       lastName,
@@ -30,6 +51,7 @@ export const userRegister = asyncHandler(async (req, res) => {
       password,
       phone,
       isAdmin,
+      customerNumber,
     });
     res.json({
       user,
@@ -59,16 +81,17 @@ export const userLogin = asyncHandler(async (req, res) => {
       phone,
       profile_photo: photo,
       isAdmin,
+      customerNumber,
     } = userFound;
 
     const accessToken = jwt.sign(
-      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin },
+      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin, customerNumber },
       process.env.ACCESS_TOKEN,
       { expiresIn: "10s" }
     );
 
     const refreshToken = jwt.sign(
-      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin },
+      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin, customerNumber },
       process.env.REFRESH_TOKEN,
       { expiresIn: "30d" }
     );
@@ -152,6 +175,7 @@ export const refreshToken = async (req, res) => {
         phone: user.phone,
         photo: user.profile_photo,
         isAdmin: user.isAdmin,
+        customerNumber: user.customerNumber,
       },
       process.env.ACCESS_TOKEN,
       { expiresIn: "10m" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten

@@ -31,6 +31,10 @@ const userSchema = mongoose.Schema(
       default:
         "https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-PNG-Free-File-Download.png",
     },
+    customerNumber:{
+      type: String,
+    }
+    ,
     verificationCodeExpires: {
       type: Date,
     },
