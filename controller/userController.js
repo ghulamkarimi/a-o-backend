@@ -5,7 +5,6 @@ import { jwtDecode } from "jwt-decode";
 import { sendVerificationLinkToEmail } from "../email/mailSender.js";
 import fs from "fs";
 import path from "path";
-import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 
 export const userRegister = asyncHandler(async (req, res) => {
@@ -156,7 +155,7 @@ export const refreshToken = async (req, res) => {
         isAdmin: user.isAdmin,
       },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "15s" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
+      { expiresIn: "15m" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
     );
 
     res.cookie("accessToken", accessToken, {
@@ -234,41 +233,34 @@ export const changePasswordByLoginUser = asyncHandler(async (req, res) => {
 
 
 export const deleteAccount = asyncHandler(async (req, res) => {
-  const userId = req.userId; // Benutzer-ID aus Middleware
+  const userId = req.userId;
+
   if (!userId) {
-    return res.status(401).json({ message: "User not found" });
+    return res.status(401).json({ message: "Authentifizierung erforderlich." });
   }
 
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Benutzer nicht gefunden." });
     }
 
-    const { confirmDelete } = req.body;
-    if (!confirmDelete) {
-      return res.status(400).json({
-        message: "Bitte bestätigen Sie, dass Sie Ihr Konto löschen möchten.",
-      });
-    }
-
-    // Profilbild löschen (falls nicht "default_avatar_url")
     if (user.profile_photo && !user.profile_photo.includes("default_avatar_url")) {
       const relativePath = user.profile_photo.split(`${req.protocol}://${req.get("host")}/`)[1];
-      const filePath = path.join(process.cwd(), relativePath); // Berechne den absoluten Pfad
-
+      const filePath = path.join(process.cwd(), relativePath);
+    
       try {
-        await fs.unlink(filePath); // Verwende die `promises`-API von fs
-        console.log(`Bild gelöscht: ${filePath}`);
+        await fs.unlink(filePath); // Verwende die Promises-API
+        console.log(`Profilbild gelöscht: ${filePath}`);
       } catch (err) {
-        console.error(`Fehler beim Löschen der Datei: ${filePath}`, err.message);
+        console.error("Fehler beim Löschen des Profilbildes:", err.message);
       }
     }
 
     // Benutzerkonto löschen
     await User.findByIdAndDelete(userId);
 
-    // Sitzungscookies entfernen
+    // Cookies entfernen
     res.clearCookie("accessToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -279,53 +271,18 @@ export const deleteAccount = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      path: "/refresh", // Sicherstellen, dass der Cookie-Pfad mit dem Backend-Setup übereinstimmt
+      path: "/refresh",
     });
-
-    // E-Mail-Transporter konfigurieren
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL, // Deine E-Mail-Adresse
-        pass: process.env.PASS_MAIL, // Dein E-Mail-Passwort
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    // E-Mail-Inhalt
-    const mailOptions = {
-      from: `"Support Team" <${process.env.EMAIL}>`,
-      to: user.email,
-      subject: "Konto erfolgreich gelöscht",
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; text-align: center;">
-          <h2 style="color: #333;">Konto erfolgreich gelöscht</h2>
-          <p style="color: #555; font-size: 16px;">
-            Lieber ${user.firstName},<br /><br />
-            Ihr Konto wurde erfolgreich gelöscht. Wir bedauern, Sie zu verlieren.
-          </p>
-          <p style="color: #888; font-size: 14px; margin-top: 20px;">
-            Wenn Sie weitere Fragen haben, wenden Sie sich bitte an unser Support-Team.
-          </p>
-        </div>
-      `,
-    };
-
-    // E-Mail senden
-    await transporter.sendMail(mailOptions);
 
     res.status(200).json({
-      message: "Konto erfolgreich gelöscht. Eine Bestätigung wurde per E-Mail gesendet.",
+      message: "Ihr Konto wurde erfolgreich gelöscht. Alle zugehörigen Daten wurden entfernt.",
     });
   } catch (error) {
     console.error("Fehler beim Löschen des Kontos:", error.message);
-    res.status(500).json({ message: "Interner Serverfehler" });
+    res.status(500).json({ message: "Interner Serverfehler." });
   }
 });
+
 
 
 export const requestPasswordReset = asyncHandler(async (req, res) => {
