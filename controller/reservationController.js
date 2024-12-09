@@ -23,15 +23,19 @@ export const createReservation = asyncHandler(async (req, res) => {
       carRentId,
       userId,
     } = req.body;
+  
+    // Helper-Funktion zur Validierung von Datumswerten
+    const isValidDate = (date) => !isNaN(new Date(date).valueOf());
+  
     try {
-      // Überprüfe, ob das Fahrzeug existiert
+      // Überprüfen, ob das Fahrzeug existiert
       const carRent = await CarRent.findById(carRentId);
-      console.log()
+  
       if (!carRent) {
         return res.status(400).json({ message: "Fahrzeug nicht gefunden." });
       }
   
-      // Wenn der Benutzer angegeben ist, suche nach dem Benutzer
+      // Überprüfen, ob der Benutzer existiert (optional)
       let user = null;
       if (userId) {
         user = await User.findById(userId);
@@ -40,10 +44,20 @@ export const createReservation = asyncHandler(async (req, res) => {
         }
       }
   
-      
+      // Validierung von Datum und Zeit
+      const pickupDateTime = new Date(`${pickupDate}T${pickupTime}`);
+      const returnDateTime = new Date(`${returnDate}T${returnTime}`);
+  
+      if (!isValidDate(pickupDateTime) || !isValidDate(returnDateTime)) {
+        return res
+          .status(400)
+          .json({ message: "Ungültige Kombination aus Datum und Zeit." });
+      }
+  
+      // Reservierung erstellen
       const newReservation = new Reservation({
         carRent: carRentId,
-        user: user ? user._id : null, 
+        user: user ? user._id : null,
         vorname,
         nachname,
         geburtsdatum,
@@ -54,53 +68,113 @@ export const createReservation = asyncHandler(async (req, res) => {
         stadt,
         pickupDate,
         returnDate,
-        pickupTime,  
-        returnTime,  
+        pickupTime,
+        returnTime,
         gesamtPrice,
-        paymentStatus: "pending", 
+        paymentStatus: "pending",
       });
   
-     
+      // Reservierung speichern
       await newReservation.save();
   
-    
+      // Fahrzeug aktualisieren
+      carRent.isBooked = true;
+      carRent.bookedSlots.push({
+        start: pickupDateTime,
+        end: returnDateTime,
+      });
+  
+      await carRent.save();
+  
       res.status(201).json({
-        message: "Reservierung erfolgreich erstellt",
+        message: "Reservierung erfolgreich erstellt.",
         reservation: newReservation,
       });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "Fehler bei der Erstellung der Reservierung." });
+      console.error("Fehler bei der Reservierungserstellung:", error);
+      res
+        .status(500)
+        .json({ message: "Fehler bei der Erstellung der Reservierung." });
     }
   });
   
   
-  export const updateReservationStatus = asyncHandler(async (req, res) => {
-      const { reservationId } = req.params; // Erwartet die Reservierungs-ID aus der URL
-      const { paymentStatus, isBooked } = req.body; // Erwartet die neuen Werte im Body der Anfrage
-    
-      try {
-        // Reservierung finden
-        const reservation = await Reservation.findById(reservationId);
-    
-        if (!reservation) {
-          return res.status(404).json({ message: "Reservierung nicht gefunden." });
+
+  export const getAllReservation = asyncHandler(async (req, res) => {
+    console.log("getAllReservation erreicht");
+    try {
+        
+        const reservations = await Reservation.find()
+            .populate('user', 'vorname nachname email') 
+            .populate('carRent', 'carModel carBrand'); 
+           
+        if (!reservations || reservations.length === 0) {
+            return res.status(404).json({ message: "Keine Reservierungen gefunden." });
         }
-    
-        // Felder aktualisieren
-        if (paymentStatus) reservation.paymentStatus = paymentStatus;
-        if (typeof isBooked === "boolean") reservation.isBooked = isBooked;
-    
-        // Änderungen speichern
-        const updatedReservation = await reservation.save();
-    
-        res.status(200).json({
-          message: "Reservierung erfolgreich aktualisiert.",
-          reservation: updatedReservation,
-        });
-      } catch (error) {
-        console.error("Fehler beim Aktualisieren der Reservierung:", error);
-        res.status(500).json({ message: "Fehler beim Aktualisieren der Reservierung." });
+
+        res.status(200).json({reservation:reservations});
+    } catch (error) {
+        console.error("Fehler beim Abrufen der Reservierungen:", error);
+        res.status(500).json({ message: "Fehler beim Abrufen der Reservierungen." });
+    }
+});
+
+  
+  export const updateReservationStatus = asyncHandler(async (req, res) => {
+    const { reservationId } = req.params;
+    const { paymentStatus, isBooked } = req.body;
+  
+    try {
+      // Reservierung suchen
+      const reservation = await Reservation.findById(reservationId);
+  
+      if (!reservation) {
+        return res.status(404).json({ message: "Reservierung nicht gefunden." });
       }
-    });
+  
+      // Status der Reservierung aktualisieren
+      if (paymentStatus) reservation.paymentStatus = paymentStatus;
+      if (typeof isBooked === "boolean") reservation.isBooked = isBooked;
+  
+      // Änderungen speichern
+      await reservation.save();
+  
+      // Fahrzeug suchen
+      const carRent = await CarRent.findById(reservation.carRent);
+  
+      if (!carRent) {
+        return res.status(404).json({ message: "Fahrzeug nicht gefunden." });
+      }
+  
+      // Fahrzeug-Status anpassen
+      if (reservation.isBooked) {
+        carRent.isBooked = true;
+        if (!carRent.bookedSlots.some(slot => 
+            slot.start.toISOString() === new Date(`${reservation.pickupDate}T${reservation.pickupTime}`).toISOString() && 
+            slot.end.toISOString() === new Date(`${reservation.returnDate}T${reservation.returnTime}`).toISOString())) {
+          carRent.bookedSlots.push({
+            start: new Date(`${reservation.pickupDate}T${reservation.pickupTime}`),
+            end: new Date(`${reservation.returnDate}T${reservation.returnTime}`),
+          });
+        }
+      } else {
+        carRent.isBooked = false;
+        carRent.bookedSlots = carRent.bookedSlots.filter(slot => 
+          slot.start.toISOString() !== new Date(`${reservation.pickupDate}T${reservation.pickupTime}`).toISOString() &&
+          slot.end.toISOString() !== new Date(`${reservation.returnDate}T${reservation.returnTime}`).toISOString());
+      }
+  
+      await carRent.save();
+  
+      res.status(200).json({
+        message: "Reservierung und Fahrzeugstatus erfolgreich aktualisiert.",
+        reservation,
+        carRent,
+      });
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren der Reservierung:", error);
+      res.status(500).json({ message: "Fehler beim Aktualisieren der Reservierung." });
+    }
+  });
+  
   
