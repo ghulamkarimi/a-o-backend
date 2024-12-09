@@ -41,10 +41,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 app.use(cookieParser());
 app.use(cors({
-     origin: ["http://localhost:3000", "http://localhost:5173"],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: ["http://localhost:3000", "http://localhost:5173"],
+  credentials: true,
+  methods: ['GET', 'POST', 'PATCH', 'DELETE','PUT'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Access-Control-Allow-Origin'],
 }));
+
 
 // Definiere die verschiedenen Routen
 app.use('/user', userRouter);
