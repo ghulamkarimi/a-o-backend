@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+ 
 
 const appointmentSchema = new mongoose.Schema({
   date: { type: Date, required: true },
@@ -13,7 +14,7 @@ const appointmentSchema = new mongoose.Schema({
   comment: { type: String, required: false },
   hsn: { type: String, required: false },
   tsn: { type: String, required: false },
-  user : { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
+  userId : { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
 });
 appointmentSchema.index({ date: 1, time: 1 }, { unique: true });
 const Appointment = mongoose.model("Appointment", appointmentSchema);

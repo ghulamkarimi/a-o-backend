@@ -21,6 +21,7 @@ export const createAppointment = async (req, res) => {
       comment,
       hsn,
       tsn,
+      userId,
     } = req.body;
 
     let appointment = await Appointment.findOne({ date, time });
@@ -43,6 +44,7 @@ export const createAppointment = async (req, res) => {
         comment,
         hsn,
         tsn,
+        userId:userId || null,
         isBookedOrBlocked: true,
       });
     } else {
@@ -56,6 +58,7 @@ export const createAppointment = async (req, res) => {
       appointment.comment = comment;
       appointment.hsn = hsn;
       appointment.tsn = tsn;
+      appointment.user = userId || null,
       appointment.isBookedOrBlocked = true;
     }
 
