@@ -13,12 +13,12 @@ const orderSchema = new mongoose.Schema(
     },
     carId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Car', // Annahme, dass du ein Car-Modell hast
+      ref: 'Car', // Verknüpfung mit Car-Modell
       required: true,
     },
-    userId:{
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'User', // Verknüpfung mit User-Modell
       required: true,
     },
     paymentStatus: {
@@ -26,10 +26,26 @@ const orderSchema = new mongoose.Schema(
       enum: ['CREATED', 'PENDING', 'COMPLETED', 'FAILED'],
       default: 'CREATED',
     },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    currency: {
+      type: String,
+      required: true,
+    },
+    payer: { type: Object, default: {} },
+    createTime: {
+      type: Date,
+    },
+    updateTime: {
+      type: Date,
+    },
     orderDate: {
       type: Date,
       default: Date.now,
     },
+  
   },
   {
     timestamps: true,
