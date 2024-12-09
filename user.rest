@@ -3,12 +3,12 @@ POST http://localhost:7001/user/register
 Content-Type: application/json
 
 {
-    "firstName":"Bill",
-    "lastName":"Gates",
-    "email":"Bill2@gmail.com",
-    "password":"123456",
-    "confirmPassword":"123456",
-    "phone":"1234567" 
+    "firstName":"Hossein",
+    "lastName":"Karimi",
+    "email":"hossein12@gmail.com",
+    "password":"amir.2020",
+    "confirmPassword":"amir.2020",
+    "phone":"01522364566" 
 }
 
 #### login User
@@ -17,7 +17,7 @@ Content-Type: application/json
 
 {
     "email":"karimiamirhossein12@gmail.com",
-    "password":"123456"
+    "password":"Sara.2020"
 }    
 
 #### logout user
@@ -49,8 +49,8 @@ Content-Type: application/json
 }
 
 #### delete user
-DELETE http://localhost:7001/user/deleteUser/670869c8582228e388748057
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzBiMDQ0Zjk2MzBlNWE2ZGFjNDlkZWEiLCJmaXJzdE5hbWUiOiJhbWlyYWxpIiwibGFzdE5hbWUiOiJob3NzZWluaSIsImVtYWlsIjoiYW1nZ2dAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzI4Nzc1NjgxLCJleHAiOjE3MzEzNjc2ODF9.yN-TfqPKGdyj5UlwZE3E_UOlbI83_WArxBLGxkSf_tU
+DELETE http://localhost:7001/user/deleteaccount
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzUyZTc3ZGI2OWM0Mjc0MDU3ZTEzYTQiLCJmaXJzdE5hbWUiOiJHaHVsYW0gSG9zc2VpbiIsImxhc3ROYW1lIjoiS2FyaW1pIiwiZW1haWwiOiJrYXJpbWlhbWlyaG9zc2VpbjEyQGdtYWlsLmNvbSIsInBob3RvIjoiaHR0cDovL2xvY2FsaG9zdDo3MDAxL2ltYWdlcy91c2VySW1hZ2VzLzE3MzM0ODY1MzIxMTItMTAwNTMwMzc3LmpwZyIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3MzM0ODcxMzIsImV4cCI6MTczMzQ4NzczMn0.fqqA2KSpQlK4mbFxpySEZ9AGyg1Abykbbb14qRrlw34jmQ
 
 #### change password user by logged in user
 PUT http://localhost:7001/user/changePassword

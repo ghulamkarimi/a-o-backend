@@ -1,18 +1,18 @@
-import express from "express";
-import {
-  generateSlots,
-  getSlots,
-  bookSlot,
-  updateSlotStatus,
-  confirmSlot,
-} from "../controller/appointmentController.js";
+import express from 'express';
+import {cancelAppointment, createAppointment,blockAppointment , unblockAppointment,getAllAppointments} from "../controller/appointmentController.js"
 
-const router = express.Router();
+const appointmentRouter = express.Router();
 
-router.post("/generate", generateSlots); // Slots generieren
-router.patch("/:slotId", updateSlotStatus); // Slot blockieren oder freigeben
-router.patch("/:slotId/confirm", confirmSlot); // Gebuchten Slot bestätigen
-router.get("/", getSlots); // Alle Slots abrufen
-router.post("/book", bookSlot); // Slot buchen
+// User routes
 
-export default router;
+appointmentRouter.post('/create',createAppointment);
+appointmentRouter.get("/cancel/:appointmentId", cancelAppointment)
+
+
+// Admin routes
+appointmentRouter.post("/block", blockAppointment)
+appointmentRouter.delete("/unblock",unblockAppointment )
+
+appointmentRouter.get("/all", getAllAppointments)
+
+export default appointmentRouter;

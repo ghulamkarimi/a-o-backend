@@ -5,6 +5,19 @@ import { checkAdmin } from '../middleware/validator/checkAdmin.js';
 import fs from 'fs';
 import path from 'path';
 
+export const generateUniqueDigitRandomNumber = async() => {
+   let isUnique = false;
+    let carIdentificationNumber ;
+    while (!isUnique) {
+        carIdentificationNumber = Math.floor(100000 + Math.random() * 900000);
+        const existingCar =await CarBuy.findOne({ carIdentificationNumber });
+        if (!existingCar) {
+            isUnique = true;
+        }
+    }
+    return carIdentificationNumber;
+};
+
 export const createBuyCar = asyncHandler(async (req, res) => {
   const {
     carTitle,
@@ -32,6 +45,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
   } = req.body;
 
   try {
+    const carIdentificationNumber = await generateUniqueDigitRandomNumber();
     const user = await checkAdmin(userId); // Überprüfe Adminrechte
  // Base URL für Bildpfade
  const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 7001}`;
@@ -54,6 +68,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
       carColor,
       carAirConditioning,
       carSeat,
+      carIdentificationNumber,
       damagedCar,
       carNavigation,
       carParkAssist,

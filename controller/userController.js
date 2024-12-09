@@ -5,8 +5,26 @@ import { jwtDecode } from "jwt-decode";
 import { sendVerificationLinkToEmail } from "../email/mailSender.js";
 import fs from "fs";
 import path from "path";
-import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
+
+
+export const generateUniqueCustomerNumber = async () => {
+  let isUnique = false;
+  let customerNumber;
+
+  while (!isUnique) {
+    // Generiere zufällige 6-stellige Nummer
+    customerNumber = Math.floor(100000000 + Math.random() * 900000000).toString();
+    const existingUser = await User.findOne({ customerNumber });
+
+    if (!existingUser) {
+      isUnique = true;
+    }
+  }
+
+  return customerNumber;
+};
+
 
 export const userRegister = asyncHandler(async (req, res) => {
   const {
@@ -17,6 +35,7 @@ export const userRegister = asyncHandler(async (req, res) => {
     password,
     confirmPassword,
     phone,
+  
   } = req.body;
   const userExist = await User.findOne({ email });
 
@@ -24,6 +43,7 @@ export const userRegister = asyncHandler(async (req, res) => {
     if (userExist) throw new Error("User Already Exist");
     if (password !== confirmPassword)
       throw new Error("Password does not match");
+    const customerNumber = await generateUniqueCustomerNumber();
     const user = await User.create({
       firstName,
       lastName,
@@ -31,6 +51,7 @@ export const userRegister = asyncHandler(async (req, res) => {
       password,
       phone,
       isAdmin,
+      customerNumber,
     });
     res.json({
       user,
@@ -60,16 +81,17 @@ export const userLogin = asyncHandler(async (req, res) => {
       phone,
       profile_photo: photo,
       isAdmin,
+      customerNumber,
     } = userFound;
 
     const accessToken = jwt.sign(
-      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin },
+      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin, customerNumber },
       process.env.ACCESS_TOKEN,
       { expiresIn: "10s" }
     );
 
     const refreshToken = jwt.sign(
-      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin },
+      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin, customerNumber },
       process.env.REFRESH_TOKEN,
       { expiresIn: "30d" }
     );
@@ -77,7 +99,6 @@ export const userLogin = asyncHandler(async (req, res) => {
     userFound.refreshToken = refreshToken;
     await userFound.save();
 
-  
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -154,15 +175,16 @@ export const refreshToken = async (req, res) => {
         phone: user.phone,
         photo: user.profile_photo,
         isAdmin: user.isAdmin,
+        customerNumber: user.customerNumber,
       },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "15s" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
+      { expiresIn: "10m" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
     );
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 5000, 
+      maxAge: 5000,
       sameSite: "strict",
     });
 
@@ -171,7 +193,6 @@ export const refreshToken = async (req, res) => {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
 };
-
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
@@ -231,99 +252,58 @@ export const changePasswordByLoginUser = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 export const deleteAccount = asyncHandler(async (req, res) => {
-  const userId = req.userId; // Benutzer-ID aus Middleware
-  if (!userId) {
-    return res.status(401).json({ message: "User not found" });
-  }
+  const userId = req.userId;
 
+  if (!userId) {
+    return res.status(401).json({ message: "Authentifizierung erforderlich." });
+  }
   try {
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Benutzer nicht gefunden." });
     }
 
-    const { confirmDelete } = req.body;
-    if (!confirmDelete) {
-      return res.status(400).json({
-        message: "Bitte bestätigen Sie, dass Sie Ihr Konto löschen möchten.",
-      });
-    }
-
-    // Profilbild löschen (falls nicht "default_avatar_url")
+    // Profilbild löschen, falls vorhanden
     if (user.profile_photo && !user.profile_photo.includes("default_avatar_url")) {
       const relativePath = user.profile_photo.split(`${req.protocol}://${req.get("host")}/`)[1];
-      const filePath = path.join(process.cwd(), relativePath); // Berechne den absoluten Pfad
+      if (relativePath) {
+        const filePath = path.join(process.cwd(), relativePath);
 
-      try {
-        await fs.unlink(filePath); // Verwende die `promises`-API von fs
-        console.log(`Bild gelöscht: ${filePath}`);
-      } catch (err) {
-        console.error(`Fehler beim Löschen der Datei: ${filePath}`, err.message);
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            console.error("Fehler beim Löschen des Profilbildes:", err.message);
+          } else {
+            console.log(`Profilbild gelöscht: ${filePath}`);
+          }
+        });
       }
     }
 
     // Benutzerkonto löschen
     await User.findByIdAndDelete(userId);
 
-    // Sitzungscookies entfernen
+    // Cookies entfernen
     res.clearCookie("accessToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
+      path: "/", // Gleicher Pfad wie beim Setzen des Cookies
     });
 
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
-      path: "/refresh", // Sicherstellen, dass der Cookie-Pfad mit dem Backend-Setup übereinstimmt
+      path: "/refresh", // Gleicher Pfad wie beim Setzen des Cookies
     });
-
-    // E-Mail-Transporter konfigurieren
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL, // Deine E-Mail-Adresse
-        pass: process.env.PASS_MAIL, // Dein E-Mail-Passwort
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    // E-Mail-Inhalt
-    const mailOptions = {
-      from: `"Support Team" <${process.env.EMAIL}>`,
-      to: user.email,
-      subject: "Konto erfolgreich gelöscht",
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; text-align: center;">
-          <h2 style="color: #333;">Konto erfolgreich gelöscht</h2>
-          <p style="color: #555; font-size: 16px;">
-            Lieber ${user.firstName},<br /><br />
-            Ihr Konto wurde erfolgreich gelöscht. Wir bedauern, Sie zu verlieren.
-          </p>
-          <p style="color: #888; font-size: 14px; margin-top: 20px;">
-            Wenn Sie weitere Fragen haben, wenden Sie sich bitte an unser Support-Team.
-          </p>
-        </div>
-      `,
-    };
-
-    // E-Mail senden
-    await transporter.sendMail(mailOptions);
 
     res.status(200).json({
-      message: "Konto erfolgreich gelöscht. Eine Bestätigung wurde per E-Mail gesendet.",
+      message: "Ihr Konto wurde erfolgreich gelöscht. Alle zugehörigen Daten wurden entfernt.",
     });
   } catch (error) {
     console.error("Fehler beim Löschen des Kontos:", error.message);
-    res.status(500).json({ message: "Interner Serverfehler" });
+    res.status(500).json({ message: "Interner Serverfehler." });
   }
 });
 
@@ -336,19 +316,24 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
     throw new Error("Benutzer nicht gefunden.");
   }
 
-  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+  const verificationCode = Math.floor(
+    100000 + Math.random() * 900000
+  ).toString();
 
   const hashedCode = await bcrypt.hash(verificationCode, 10);
   user.verificationCode = hashedCode;
   user.verificationCodeExpires = Date.now() + 15 * 60 * 1000; // Ablaufzeit: 15 Minuten
   await user.save();
-  await sendVerificationLinkToEmail(user.email, user.firstName, verificationCode);
+  await sendVerificationLinkToEmail(
+    user.email,
+    user.firstName,
+    verificationCode
+  );
 
   res.json({
     message: "Verifizierungscode wurde an Ihre E-Mail gesendet.",
   });
 });
-
 
 export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
   const { email, verificationCode } = req.body;
@@ -377,7 +362,10 @@ export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
   }
 
   // Vergleiche den übergebenen `verificationCode` mit dem gespeicherten Hash
-  const isValidCode = await bcrypt.compare(verificationCode, user.verificationCode);
+  const isValidCode = await bcrypt.compare(
+    verificationCode,
+    user.verificationCode
+  );
   if (!isValidCode) {
     throw new Error("Ungültiger Verifizierungscode.");
   }
@@ -397,8 +385,6 @@ export const confirmEmailVerificationCode = asyncHandler(async (req, res) => {
   });
 });
 
-
-
 export const changePasswordWithEmail = asyncHandler(async (req, res) => {
   const { email, newPassword, confirmPassword } = req.body;
 
@@ -407,7 +393,9 @@ export const changePasswordWithEmail = asyncHandler(async (req, res) => {
   }
 
   if (newPassword !== confirmPassword) {
-    return res.status(400).json({ message: "Die Passwörter stimmen nicht überein." });
+    return res
+      .status(400)
+      .json({ message: "Die Passwörter stimmen nicht überein." });
   }
 
   // Passwort-Sicherheitsüberprüfung (optional)
@@ -448,7 +436,9 @@ export const profilePhotoUpload = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Keine Datei hochgeladen" });
   }
 
-  const filePath = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
+  const filePath = `${req.protocol}://${req.get(
+    "host"
+  )}/${req.file.path.replace(/\\/g, "/")}`;
   try {
     const user = await User.findById(userId);
     if (!user) {

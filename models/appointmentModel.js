@@ -1,23 +1,21 @@
 import mongoose from "mongoose";
 
-const appointmentSlotSchema = new mongoose.Schema({
-  date: { type: Date, required: true }, // Datum und Zeit des Slots
-  status: {
-    type: String,
-    enum: ["available", "booked", "blocked", "confirmed"], // Status des Slots
-    default: "available",
-  },
-  service: String, // Der gewünschte Service (z.B. Ölwechsel)
-  customerDetails: {
-    fullName: String,
-    email: String,
-    phone: String,
-    licensePlate: String,
-    notes: String,
-  },
-  createdAt: { type: Date, default: Date.now }, // Slot-Erstellung
+const appointmentSchema = new mongoose.Schema({
+  date: { type: Date, required: true },
+  time: { type: String, required: true },
+  firstName: { type: String, required: false },
+  lastName: { type: String, required: false },
+  licensePlate: { type: String, required: false },
+  email: { type: String, required: false },
+  phone: { type: String, required: false },
+  isBookedOrBlocked: { type: Boolean, default: false },
+  service: { type: String, required: false },
+  comment: { type: String, required: false },
+  hsn: { type: String, required: false },
+  tsn: { type: String, required: false },
+  user : { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
 });
+appointmentSchema.index({ date: 1, time: 1 }, { unique: true });
+const Appointment = mongoose.model("Appointment", appointmentSchema);
 
-const AppointmentSlot = mongoose.model("AppointmentSlot", appointmentSlotSchema);
-
-export default AppointmentSlot;
+export default Appointment;

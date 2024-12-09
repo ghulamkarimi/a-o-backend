@@ -19,6 +19,9 @@ const carBuySchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    carIdentificationNumber: {
+      type: String,
+    },
     isSold: {
       type: Boolean,
       default: false,
@@ -31,7 +34,8 @@ const carBuySchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    carImages: {  // Für mehrere Bilder
+    carImages: {
+      // Für mehrere Bilder
       type: [String],
       required: true,
     },
