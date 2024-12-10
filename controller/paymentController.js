@@ -3,10 +3,10 @@ import asyncHandler from "express-async-handler";
 import nodeMailer from "nodemailer";
 import Order from "../models/paymentModel.js";
 import client from "../config/paypalConfig.js";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 import CarRent from "../models/carRentModel.js";
-import Reservation from "../models/reservationModel.js"
-dotenv.config()
+import Reservation from "../models/reservationModel.js";
+dotenv.config();
 
 const sendCustomerInvoiceEmail = async (customerEmail, order, carDetails) => {
   const transporter = nodeMailer.createTransport({
@@ -84,7 +84,9 @@ const sendCustomerInvoiceEmail = async (customerEmail, order, carDetails) => {
               <p><strong>Währung:</strong> ${order.currency}</p>
               
               <h3>Details der Bestellung:</h3>
-              <p>Die Bestellung mit der ID <strong>${order.orderId}</strong> wurde erfolgreich von Ihnen durchgeführt. Wir haben die Zahlung erhalten.</p>
+              <p>Die Bestellung mit der ID <strong>${
+                order.orderId
+              }</strong> wurde erfolgreich von Ihnen durchgeführt. Wir haben die Zahlung erhalten.</p>
               
               <h3>Fahrzeugdetails:</h3>
               <p><strong>Fahrzeug-ID:</strong> ${carDetails._id}</p>
@@ -111,29 +113,31 @@ const sendCustomerInvoiceEmail = async (customerEmail, order, carDetails) => {
   }
 };
 
-
 export const createOrder = asyncHandler(async (req, res) => {
-  const { userId, carId, customerEmail, amount } = req.body;
+  const { userId, carId, customerEmail, amount ,reservationId} = req.body;
 
   if (!userId || !carId || !customerEmail || !amount) {
     return res.status(400).json({
-      message: "Alle erforderlichen Felder (userId, carId, customerEmail, amount) müssen ausgefüllt sein.",
+      message:
+        "Alle erforderlichen Felder (userId, carId, customerEmail, amount) müssen ausgefüllt sein.",
     });
   }
 
   const request = new paypal.orders.OrdersCreateRequest();
   request.requestBody({
     intent: "CAPTURE",
-    purchase_units: [{
-      amount: {
-        currency_code: "EUR",
-        value: amount,
+    purchase_units: [
+      {
+        amount: {
+          currency_code: "EUR",
+          value: amount,
+        },
       },
-    }],
+    ],
     application_context: {
       return_url: "http://localhost:3000/payment/success",
       cancel_url: "http://localhost:7001/payment/cancel",
-    }
+    },
   });
 
   try {
@@ -147,6 +151,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       userId: userId,
       amount: amount,
       currency: "EUR",
+      reservationId,
       paymentStatus: "CREATED", // Initialer Status
       payer: {}, // Payer wird im Capture-Schritt aktualisiert
       createTime: order.result.create_time,
@@ -155,7 +160,9 @@ export const createOrder = asyncHandler(async (req, res) => {
 
     await newOrder.save(); // Speichern in MongoDB
 
-    const approveUrl = order.result.links.find(link => link.rel === 'approve').href;
+    const approveUrl = order.result.links.find(
+      (link) => link.rel === "approve"
+    ).href;
 
     res.json({
       approvalUrl: approveUrl,
@@ -167,64 +174,88 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 });
 
-  
-  
+export const capturePayment = asyncHandler(async (req, res) => {
+  const { token, PayerID } = req.query; // token ist die orderId
+  console.log("orderId (token):", token);
+  console.log("PayerID:", PayerID);
 
-  export const capturePayment = asyncHandler(async (req, res) => {
-    const { token, PayerID } = req.query; // token ist die orderId
-    console.log("orderId (token):", token);
-    console.log("PayerID:", PayerID);
-  
-    if (!token || !PayerID) {
-      return res.status(400).json({ message: "Ungültige Bestell-ID oder Payer-ID" });
-    }
-  
-    const request = new paypal.orders.OrdersCaptureRequest(token);
-    request.requestBody({});
-  
-    try {
-      const capture = await client.execute(request);
-      console.log("PayPal Capture Result:", JSON.stringify(capture.result, null, 2));
-    
-      if (capture.result.status === "COMPLETED") {
-        const orderDetails = await Order.findOne({ orderId: capture.result.id });
-        if (!orderDetails) {
-          console.error("Bestellung nicht gefunden für:", capture.result.id);
-          return res.status(404).json({ message: "Bestellung nicht gefunden" });
-        }
-    
-        // Bestellung aktualisieren
-        orderDetails.paymentStatus = "COMPLETED";
-        orderDetails.payer = {
-          name: `${capture.result.payer.name.given_name} ${capture.result.payer.name.surname}`,
-          email: capture.result.payer.email_address,
-          country_code: capture.result.payer.address.country_code,
-        };
-        orderDetails.createTime = capture.result.create_time;
-        orderDetails.updateTime = capture.result.update_time;
-        orderDetails.paymentSource = capture.result.payment_source.paypal;
-        orderDetails.purchaseUnits = capture.result.purchase_units;
-    
-        await orderDetails.save(); // Speichern
-    
-        const reservationId = orderDetails.reservationId; // Falls die Reservierungs-ID bekannt ist
-        const reservation = await Reservation.findById(reservationId);
-        if (reservation) {
-          reservation.paymentStatus = "COMPLETED";
-          reservation.isBooked = true;
-          await reservation.save();
-        }
-    
-        const carDetails = await CarRent.findById(orderDetails.carId);
-        await sendCustomerInvoiceEmail(orderDetails.customerEmail, orderDetails, carDetails);
-    
-        res.json({ message: "Zahlung erfolgreich abgeschlossen! und Rechnung gesendet", details: capture.result });
-      } else {
-        res.status(400).json({ message: "Zahlung nicht erfolgreich." });
+  if (!token || !PayerID) {
+    return res
+      .status(400)
+      .json({ message: "Ungültige Bestell-ID oder Payer-ID" });
+  }
+
+  const request = new paypal.orders.OrdersCaptureRequest(token);
+  request.requestBody({});
+
+  try {
+    const capture = await client.execute(request);
+    console.log(
+      "PayPal Capture Result:",
+      JSON.stringify(capture.result, null, 2)
+    );
+
+    if (capture.result.status === "COMPLETED") {
+      const orderDetails = await Order.findOne({ orderId: capture.result.id });
+      if (!orderDetails) {
+        console.error("Bestellung nicht gefunden für:", capture.result.id);
+        return res.status(404).json({ message: "Bestellung nicht gefunden" });
       }
-    } catch (error) {
-      console.error("Fehler beim Erfassen der Zahlung:", error);
-      res.status(500).json({ message: "Fehler beim Erfassen der Zahlung" });
+
+      // Bestellung aktualisieren
+      orderDetails.paymentStatus = "COMPLETED";
+      orderDetails.payer = {
+        name: `${capture.result.payer.name.given_name} ${capture.result.payer.name.surname}`,
+        email: capture.result.payer.email_address,
+        country_code: capture.result.payer.address.country_code,
+      };
+      orderDetails.createTime = capture.result.create_time;
+      orderDetails.updateTime = capture.result.update_time;
+      orderDetails.paymentSource = capture.result.payment_source.paypal;
+      orderDetails.purchaseUnits = capture.result.purchase_units;
+
+      await orderDetails.save(); // Speichern
+      const reservation = await Reservation.findById(
+        orderDetails.reservationId
+      );
+      if (reservation) {
+        reservation.paymentStatus = "completed";
+        reservation.isBooked = true;
+
+        const carDetails = await CarRent.findById(reservation.carRent);
+        if (carDetails) {
+          carDetails.isBooked = true;
+
+            // Convert strings to Date objects
+    const pickupDate = new Date(reservation.pickupDate);
+    const returnDate = new Date(reservation.returnDate);
+
+       carDetails.bookedSlots.push({
+      start: pickupDate,
+      end: returnDate,
+    });
+
+          await carDetails.save();
+        }
+
+        await reservation.save();
+      }
+      const carDetails = await CarRent.findById(orderDetails.carId);
+      await sendCustomerInvoiceEmail(
+        orderDetails.customerEmail,
+        orderDetails,
+        carDetails
+      );
+
+      res.json({
+        message: "Zahlung erfolgreich abgeschlossen! und Rechnung gesendet",
+        details: capture.result,
+      });
+    } else {
+      res.status(400).json({ message: "Zahlung nicht erfolgreich." });
     }
-    
-  });
+  } catch (error) {
+    console.error("Fehler beim Erfassen der Zahlung:", error);
+    res.status(500).json({ message: "Fehler beim Erfassen der Zahlung" });
+  }
+});
