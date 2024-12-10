@@ -34,6 +34,8 @@ const orderSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    reservationId: { type: mongoose.Schema.Types.ObjectId, ref: "Reservation" }, 
+
     payer: { type: Object, default: {} },
     createTime: {
       type: Date,
