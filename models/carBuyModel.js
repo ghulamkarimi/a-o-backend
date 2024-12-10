@@ -54,6 +54,7 @@ const carBuySchema = new mongoose.Schema(
     carAirConditioning: {
       type: Boolean,
       required: true,
+      degault: false,
     },
     carSeat: {
       type: String,
@@ -62,6 +63,7 @@ const carBuySchema = new mongoose.Schema(
     damagedCar: {
       type: Boolean,
       required: true,
+      default: false,
     },
     carNavigation: {
       type: Boolean,
@@ -74,6 +76,7 @@ const carBuySchema = new mongoose.Schema(
     carAccidentFree: {
       type: Boolean,
       required: true,
+      default: true,
     },
     carGearbox: {
       type: String,
