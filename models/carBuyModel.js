@@ -9,7 +9,7 @@ const carBuySchema = new mongoose.Schema(
     carCategory: {
       type: String,
       required: true,
-      enum: ["Transporter", "PKW", "Wohnwagen"],
+      enum: ["Transporter", "PKW", "Wohnwagen", "LKW", "Motorrad", "Wohnmobil", "Oldtimer", "Sonstiges"],
     },
     carPrice: {
       type: String,
@@ -62,20 +62,20 @@ const carBuySchema = new mongoose.Schema(
     },
     damagedCar: {
       type: Boolean,
-      required: true,
+      required: false,
       default: false,
     },
     carNavigation: {
       type: Boolean,
-      required: true,
+      required: false,
     },
     carParkAssist: {
       type: Boolean,
-      required: true,
+      required: false,
     },
     carAccidentFree: {
       type: Boolean,
-      required: true,
+      required: false,
       default: true,
     },
     carGearbox: {
