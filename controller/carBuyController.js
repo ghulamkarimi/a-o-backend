@@ -19,32 +19,31 @@ export const generateUniqueDigitRandomNumber = async() => {
 };
 
 export const createBuyCar = asyncHandler(async (req, res) => {
-  const {
-    carTitle,
-    carPrice,
-    carCategory,
-    fuelType,
-    owner,
-    isSold = false,
-    carDescription,
-    carKilometers,
-    carColor,
-    carAirConditioning = false,
-    carSeat,
-    carEuroNorm,
-    damagedCar = false,
-    carNavigation = false,
-    carParkAssist = false,
-    carAccidentFree = true,
-    carFirstRegistrationDay,
-    carGearbox,
-    carMotor,
-    carHorsePower,
-    carTechnicalInspection,
-    userId,
-  } = req.body;
-
   try {
+    const {
+      carTitle,
+      carPrice,
+      carCategory,
+      fuelType,
+      owner,
+      isSold = false,
+      carDescription,
+      carKilometers,
+      carColor,
+      carAirConditioning = false,
+      carSeat,
+      carEuroNorm,
+      damagedCar = false,
+      carNavigation = false,
+      carParkAssist = false,
+      carAccidentFree = false,
+      carFirstRegistrationDay,
+      carGearbox,
+      carMotor,
+      carHorsePower,
+      carTechnicalInspection,
+      userId,
+    } = req.body;
     const carIdentificationNumber = await generateUniqueDigitRandomNumber();
     const user = await checkAdmin(userId); // Überprüfe Adminrechte
  // Base URL für Bildpfade
@@ -84,7 +83,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
 
     const createdCarBuy = await carBuy.save();
     res.status(201).json(createdCarBuy);
-    req.io.emit('carBuyCreated', createdCarBuy); // WebSocket-Benachrichtigung senden
+
   } catch (error) {
     console.error('Fehler in createBuyCar:', error.message);
     res.status(400).json({ message: error.message });
@@ -145,7 +144,6 @@ export const deleteCarBuy = asyncHandler(async (req, res) => {
     await CarBuy.findByIdAndDelete(carId);
 
     res.status(200).json({ message: 'Fahrzeug und zugehörige Bilder erfolgreich gelöscht' });
-    req.io.emit('carBuyDeleted', carId); // WebSocket-Benachrichtigung senden
   } catch (error) {
     console.error('Fehler beim Löschen des Fahrzeugs:', error.message);
     res.status(500).json({ message: 'Fehler beim Löschen des Fahrzeugs' });
@@ -195,7 +193,6 @@ export const updateCarBuy = asyncHandler(async (req, res) => {
 
     const updatedCarBuy = await carBuy.save();
     res.status(200).json(updatedCarBuy);
-    req.io.emit('carBuyUpdated', updatedCarBuy); 
   } catch (error) {
     console.error('Fehler beim Aktualisieren des Fahrzeugs:', error.message);
     res.status(500).json({ message: 'Fehler beim Aktualisieren des Fahrzeugs' });
