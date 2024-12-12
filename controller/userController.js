@@ -13,7 +13,6 @@ export const generateUniqueCustomerNumber = async () => {
   let customerNumber;
 
   while (!isUnique) {
-    // Generiere zufällige 6-stellige Nummer
     customerNumber = Math.floor(100000000 + Math.random() * 900000000).toString();
     const existingUser = await User.findOne({ customerNumber });
 
@@ -93,7 +92,7 @@ export const userLogin = asyncHandler(async (req, res) => {
     const refreshToken = jwt.sign(
       { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin, customerNumber },
       process.env.REFRESH_TOKEN,
-      { expiresIn: "30d" }
+      { expiresIn: "1d" }
     );
 
     userFound.refreshToken = refreshToken;
@@ -102,7 +101,7 @@ export const userLogin = asyncHandler(async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge:  24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
 
@@ -178,7 +177,7 @@ export const refreshToken = async (req, res) => {
         customerNumber: user.customerNumber,
       },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "10m" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
+      { expiresIn: "10s" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
     );
 
     res.cookie("accessToken", accessToken, {
