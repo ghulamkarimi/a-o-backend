@@ -1,12 +1,11 @@
-import mongoose from 'mongoose';    
+import mongoose from 'mongoose';
 
-    export const dbConnect = async()=>{
-    try {
-      await  mongoose.connect(process.env.MONGO_url,{
-
-      })
-        console.log('Database connected')
-    } catch (error) {
-        console.log("Error in connecting to database")
-    }
-}
+export const dbConnect = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log('✅ Database connected successfully');
+  } catch (error) {
+    console.error('❌ Error in connecting to database:', error.message);
+    process.exit(1); // Beendet die App bei einem schwerwiegenden Fehler
+  }
+};
