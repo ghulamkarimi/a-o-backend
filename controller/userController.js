@@ -86,7 +86,7 @@ export const userLogin = asyncHandler(async (req, res) => {
     const accessToken = jwt.sign(
       { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin, customerNumber },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "10s" }
+      { expiresIn: "10m" }
     );
 
     const refreshToken = jwt.sign(
@@ -102,7 +102,7 @@ export const userLogin = asyncHandler(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge:  24 * 60 * 60 * 1000,
-      sameSite: "strict",
+      sameSite: "lax",
     });
 
     const decoded = jwtDecode(accessToken);
@@ -177,13 +177,13 @@ export const refreshToken = async (req, res) => {
         customerNumber: user.customerNumber,
       },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "10s" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
+      { expiresIn: "10m" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
     );
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 5000,
+      maxAge: 10 * 60 * 1000, // 10 Minuten
       sameSite: "strict",
     });
 
@@ -204,10 +204,11 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 });
 
 export const userEdit = asyncHandler(async (req, res) => {
+  const { firstName, lastName, email, phone } = req.body;
+  const userId = req.userId;
+  console.log("userId", userId);
   try {
-    const { firstName, lastName, email, phone } = req.body;
-    const userId = req.user.userId;
-    console.log("userId", userId); // Change this if your JWT has a different structure
+    // Change this if your JWT has a different structure
 
     const user = await User.findByIdAndUpdate(
       userId,
