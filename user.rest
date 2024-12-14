@@ -16,13 +16,13 @@ POST http://localhost:7001/user/login
 Content-Type: application/json
 
 {
-    "email":"karimiamirhossein12@gmail.com",
-    "password":"Sara.2020"
+    "email":"hossein12@gmail.com",
+    "password":"amir.2020"
 }    
 
 #### logout user
 DELETE http://localhost:7001/user/logout
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzQ3NWI1ODVlNjllOGQ5MTU5MTdmMDEiLCJmaXJzdE5hbWUiOiJHaHVsYW0gSG9zc2VpbiIsImxhc3ROYW1lIjoiS2FyaW1pIiwiZW1haWwiOiJrYXJpbWlhbWlyaG9zc2VpbjEyQGdtYWlsLmNvbSIsInBob3RvIjoiaHR0cHM6Ly93d3cucG5ncGxheS5jb20vd3AtY29udGVudC91cGxvYWRzLzEyL1VzZXItQXZhdGFyLVByb2ZpbGUtUE5HLUZyZWUtRmlsZS1Eb3dubG9hZC5wbmciLCJpc0FkbWluIjpmYWxzZSwiaWF0IjoxNzMyNzMzMDk0LCJleHAiOjE3MzUzMjUwOTR9.SFX3g0VKB3J1_VVcpscgcsyM6OOkTY63j2suWf2Dfy8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzViN2RhYzQ2ZmUwYTFhYmU4YmYyODUiLCJmaXJzdE5hbWUiOiJHaHVsYW0iLCJsYXN0TmFtZSI6IkthcmltaSIsImVtYWlsIjoia2FyaW1pYW1pcmhvc3NlaW4xMkBnbWFpbC5jb20iLCJwaG9uZSI6IjEyMzQ1NjciLCJwaG90byI6Imh0dHA6Ly9sb2NhbGhvc3Q6NzAwMS9pbWFnZXMvdXNlckltYWdlcy8xNzM0MDg3NDc1MTg4LTQ3ODIyNjMxMC53ZWJwIiwiaXNBZG1pbiI6ZmFsc2UsImN1c3RvbWVyTnVtYmVyIjoiNjkwMjUxOTI2IiwiaWF0IjoxNzM0MDg4MTY4LCJleHAiOjE3MzQwODg3Njh9.DSSwQPQE3V7m1WE6wSlCPsFoWHTaM9v-plGyLpB8hpk
 
  
 ### Refresh User Token
@@ -36,15 +36,15 @@ Content-Type: application/json
 
 #### edit user profile
 PUT http://localhost:7001/user/update
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzViN2RhYzQ2ZmUwYTFhYmU4YmYyODUiLCJmaXJzdE5hbWUiOiJHaHVsYW0gSG9zc2VpbiIsImxhc3ROYW1lIjoiS2FyaW1pIiwiZW1haWwiOiJrYXJpbWlhbWlyaG9zc2VpbjEyQGdtYWlsLmNvbSIsInBob3RvIjoiaHR0cHM6Ly93d3cucG5ncGxheS5jb20vd3AtY29udGVudC91cGxvYWRzLzEyL1VzZXItQXZhdGFyLVByb2ZpbGUtUE5HLUZyZWUtRmlsZS1Eb3dubG9hZC5wbmciLCJpc0FkbWluIjpmYWxzZSwiY3VzdG9tZXJOdW1iZXIiOiI2OTAyNTE5MjYiLCJpYXQiOjE3MzQwODcyOTQsImV4cCI6MTczNDA4Nzg5NH0.e9_lgptCnKDsCv0ykfcM6VrL1yDL61yTmJgjKFsj6tM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzViN2RhYzQ2ZmUwYTFhYmU4YmYyODUiLCJmaXJzdE5hbWUiOiJiYWhhciIsImxhc3ROYW1lIjoiYWhtZGkiLCJlbWFpbCI6ImJhaGFyQGdtYWlsLmNvbSIsInBob25lIjoiMTIzNDU2NyIsInBob3RvIjoiaHR0cDovL2xvY2FsaG9zdDo3MDAxL2ltYWdlcy91c2VySW1hZ2VzLzE3MzQwODc0NzUxODgtNDc4MjI2MzEwLndlYnAiLCJpc0FkbWluIjpmYWxzZSwiY3VzdG9tZXJOdW1iZXIiOiI2OTAyNTE5MjYiLCJpYXQiOjE3MzQwODgwNzIsImV4cCI6MTczNDA4ODY3Mn0.uFreI3izmv6ZXrLlcS-Mr5P0Hoh9aPGn5qr1S6liK2Q
 Content-Type: application/json
 
 {
-    "firstName":"bahar",
-    "lastName":"ahmdi",
-    "email":"bahar@gmail.com",
-    "password":"bahar.2020",
-    "confirmPassword":"bahar.2020",
+    "firstName":"Ghulam",
+    "lastName":"Karimi",
+    "email":"karimiamirhossein12@gmail.com",
+    "password":"Sara.2020",
+    "confirmPassword":"Sara.2020",
     "phone":"1234567" 
 }
 

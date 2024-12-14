@@ -19,7 +19,7 @@ const orderSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User', // Verknüpfung mit User-Modell
-      required: true,
+      required: false,
     },
     paymentStatus: {
       type: String,

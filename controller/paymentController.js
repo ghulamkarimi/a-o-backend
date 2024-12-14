@@ -114,14 +114,17 @@ const sendCustomerInvoiceEmail = async (customerEmail, order, carDetails) => {
 };
 
 export const createOrder = asyncHandler(async (req, res) => {
-  const { userId, carId, customerEmail, amount ,reservationId} = req.body;
+  const { userId, carId, customerEmail, amount, reservationId } = req.body;
 
-  if (!userId || !carId || !customerEmail || !amount) {
+  if (!carId || !customerEmail || !amount) {
     return res.status(400).json({
       message:
-        "Alle erforderlichen Felder (userId, carId, customerEmail, amount) müssen ausgefüllt sein.",
+        "Alle erforderlichen Felder (carId, customerEmail, amount) müssen ausgefüllt sein.",
     });
   }
+
+  // Falls userId fehlt, kann es als null akzeptiert werden oder einen Standardwert annehmen
+  const userIdToUse = userId || null;
 
   const request = new paypal.orders.OrdersCreateRequest();
   request.requestBody({
@@ -148,7 +151,7 @@ export const createOrder = asyncHandler(async (req, res) => {
       orderId: order.result.id, // PayPal-Bestell-ID
       customerEmail: customerEmail,
       carId: carId,
-      userId: userId,
+      userId: userIdToUse,
       amount: amount,
       currency: "EUR",
       reservationId,

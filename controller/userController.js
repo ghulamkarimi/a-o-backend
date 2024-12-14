@@ -7,13 +7,14 @@ import fs from "fs";
 import path from "path";
 import bcrypt from "bcrypt";
 
-
 export const generateUniqueCustomerNumber = async () => {
   let isUnique = false;
   let customerNumber;
 
   while (!isUnique) {
-    customerNumber = Math.floor(100000000 + Math.random() * 900000000).toString();
+    customerNumber = Math.floor(
+      100000000 + Math.random() * 900000000
+    ).toString();
     const existingUser = await User.findOne({ customerNumber });
 
     if (!existingUser) {
@@ -24,7 +25,6 @@ export const generateUniqueCustomerNumber = async () => {
   return customerNumber;
 };
 
-
 export const userRegister = asyncHandler(async (req, res) => {
   const {
     firstName,
@@ -34,7 +34,6 @@ export const userRegister = asyncHandler(async (req, res) => {
     password,
     confirmPassword,
     phone,
-  
   } = req.body;
   const userExist = await User.findOne({ email });
 
@@ -84,13 +83,31 @@ export const userLogin = asyncHandler(async (req, res) => {
     } = userFound;
 
     const accessToken = jwt.sign(
-      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin, customerNumber },
+      {
+        userId,
+        firstName,
+        lastName,
+        email: userEmail,
+        phone,
+        photo,
+        isAdmin,
+        customerNumber,
+      },
       process.env.ACCESS_TOKEN,
       { expiresIn: "10m" }
     );
 
     const refreshToken = jwt.sign(
-      { userId, firstName, lastName, email: userEmail, phone, photo, isAdmin, customerNumber },
+      {
+        userId,
+        firstName,
+        lastName,
+        email: userEmail,
+        phone,
+        photo,
+        isAdmin,
+        customerNumber,
+      },
       process.env.REFRESH_TOKEN,
       { expiresIn: "1d" }
     );
@@ -101,7 +118,7 @@ export const userLogin = asyncHandler(async (req, res) => {
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge:  24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
       sameSite: "lax",
     });
 
@@ -265,8 +282,13 @@ export const deleteAccount = asyncHandler(async (req, res) => {
     }
 
     // Profilbild löschen, falls vorhanden
-    if (user.profile_photo && !user.profile_photo.includes("default_avatar_url")) {
-      const relativePath = user.profile_photo.split(`${req.protocol}://${req.get("host")}/`)[1];
+    if (
+      user.profile_photo &&
+      !user.profile_photo.includes("default_avatar_url")
+    ) {
+      const relativePath = user.profile_photo.split(
+        `${req.protocol}://${req.get("host")}/`
+      )[1];
       if (relativePath) {
         const filePath = path.join(process.cwd(), relativePath);
 
@@ -299,14 +321,14 @@ export const deleteAccount = asyncHandler(async (req, res) => {
     });
 
     res.status(200).json({
-      message: "Ihr Konto wurde erfolgreich gelöscht. Alle zugehörigen Daten wurden entfernt.",
+      message:
+        "Ihr Konto wurde erfolgreich gelöscht. Alle zugehörigen Daten wurden entfernt.",
     });
   } catch (error) {
     console.error("Fehler beim Löschen des Kontos:", error.message);
     res.status(500).json({ message: "Interner Serverfehler." });
   }
 });
-
 
 export const requestPasswordReset = asyncHandler(async (req, res) => {
   const { email } = req.body;
@@ -431,7 +453,7 @@ export const changePasswordWithEmail = asyncHandler(async (req, res) => {
 
 export const profilePhotoUpload = asyncHandler(async (req, res) => {
   const userId = req.userId; // Benutzer-ID aus dem Token
-
+ 
   if (!req.file) {
     return res.status(400).json({ message: "Keine Datei hochgeladen" });
   }
@@ -455,8 +477,7 @@ export const profilePhotoUpload = asyncHandler(async (req, res) => {
         fs.unlinkSync(oldPath);
       }
     }
-
-    // Neues Profilbild speichern
+  
     user.profile_photo = filePath;
     await user.save();
 

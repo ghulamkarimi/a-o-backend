@@ -64,5 +64,45 @@ carRentSchema.path("bookedSlots").validate(function (value) {
   }
 });
 
+
+
+
+carRentSchema.virtual("clearBookedSlotsAfterReturn").get(function () {
+  if (this.isBooked) {
+    const returnDate = new Date(this.returnDate);
+    const currentDate = new Date();
+    
+    if (currentDate >= returnDate) {
+      this.bookedSlots = []; // Leere gebuchte Slots bei Rückgabe
+      this.isBooked = false; // Setze das Fahrzeug auf nicht gebucht
+    }
+  }
+  return this.bookedSlots;
+});
+
+
+carRentSchema.methods.extendBooking = function (newStart, newEnd) {
+ 
+  const newStartDate = new Date(newStart);
+  const newEndDate = new Date(newEnd);
+
+  if (newStartDate >= newEndDate) {
+    throw new Error("Ungültige Daten. Der Startzeitpunkt kann nicht nach dem Endzeitpunkt liegen.");
+  }
+
+
+  for (let slot of this.bookedSlots) {
+    if ((newStartDate >= slot.start && newStartDate <= slot.end) ||
+        (newEndDate >= slot.start && newEndDate <= slot.end)) {
+      throw new Error("Die neuen Zeiträume überschneiden sich mit bereits gebuchten Slots.");
+    }
+  }
+
+  this.bookedSlots.push({ start: newStartDate, end: newEndDate });
+  return this.save();
+};
+
+
+
 const carRent = mongoose.model("carRent", carRentSchema);
 export default carRent;
