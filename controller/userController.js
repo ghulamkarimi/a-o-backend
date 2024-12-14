@@ -194,13 +194,13 @@ export const refreshToken = async (req, res) => {
         customerNumber: user.customerNumber,
       },
       process.env.ACCESS_TOKEN,
-      { expiresIn: "10s" } // Verlängern Sie die Gültigkeit, z. B. auf 15 Minuten
+      { expiresIn: "10s" } 
     );
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      maxAge: 10 * 1000, // 10 Minuten
+      maxAge: 10 * 1000, 
       sameSite: "strict",
     });
 
