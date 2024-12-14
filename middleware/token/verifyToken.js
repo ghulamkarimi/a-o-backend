@@ -16,7 +16,7 @@ export const verifyToken = (req, res, next) => {
     console.log("Kein Access Token gefunden. Verwende Refresh Token.");
     const refreshToken = req.cookies.refreshToken;
 
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN, (err, decoded) => {
       if (err) {
         console.error("Fehler bei der Refresh-Token-Verifizierung:", err.message);
         return res.status(403).json({
@@ -26,20 +26,22 @@ export const verifyToken = (req, res, next) => {
         });
       }
 
-      // Neuen Access Token erstellen und an den Client senden
+      // Neuen Access Token erstellen
       const newAccessToken = jwt.sign(
         { userId: decoded.userId, email: decoded.email },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "15m" } // Kurzlebiger Access Token
+        process.env.ACCESS_TOKEN,
+        { expiresIn: "15m" }
       );
       console.log("Neuer Access Token erstellt:", newAccessToken);
 
-      res.setHeader("Authorization", `Bearer ${newAccessToken}`);
+      // Access Token im Request-Objekt speichern
+      req.newAccessToken = newAccessToken;
       req.userId = decoded.userId;
-      next();
+
+      return next(); // Weiter zum nächsten Handler
     });
 
-    return;
+    return; // Sicherstellen, dass nichts nach der Token-Erstellung ausgeführt wird
   }
 
   // Token verifizieren (Access Token)
@@ -47,7 +49,7 @@ export const verifyToken = (req, res, next) => {
     return res.status(401).json({ message: "Access Denied" });
   }
 
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
     if (err) {
       console.error("Token-Verifizierungsfehler:", err.message);
       return res.status(403).json({

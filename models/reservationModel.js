@@ -22,7 +22,7 @@ const reservationSchema = mongoose.Schema(
     },
     geburtsdatum: {
       type: String,
-      required: true,
+      required: false,
     },
     email: {
       type: String,

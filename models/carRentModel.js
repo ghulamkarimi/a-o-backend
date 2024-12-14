@@ -102,7 +102,5 @@ carRentSchema.methods.extendBooking = function (newStart, newEnd) {
   return this.save();
 };
 
-
-
 const carRent = mongoose.model("carRent", carRentSchema);
 export default carRent;
