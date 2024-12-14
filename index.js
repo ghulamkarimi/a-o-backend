@@ -47,7 +47,14 @@ app.use(cors({
   origin: ["http://localhost:3000", "http://localhost:5173", "https://ghulam-dev.me",],
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE','PUT'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Access-Control-Allow-Origin'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'Accept',
+    'Origin',
+    'X-Requested-With',
+    'Access-Control-Allow-Origin',
+  ],
 }));
 
 
