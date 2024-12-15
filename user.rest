@@ -6,8 +6,8 @@ Content-Type: application/json
     "firstName":"Hossein",
     "lastName":"Karimi",
     "email":"hossein12@gmail.com",
-    "password":"amir.2020",
-    "confirmPassword":"amir.2020",
+    "password":"Amir.2020",
+    "confirmPassword":"Amir.2020",
     "phone":"01522364566" 
 }
 
@@ -17,7 +17,7 @@ Content-Type: application/json
 
 {
     "email":"hossein12@gmail.com",
-    "password":"amir.2020"
+    "password":"Amir.2020"
 }    
 
 #### logout user

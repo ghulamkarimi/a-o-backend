@@ -61,154 +61,121 @@ export const userRegister = asyncHandler(async (req, res) => {
   }
 });
 
+ 
+
 export const userLogin = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  console.log("Attempting to log in user with email:", email);
 
+  // Prüfe, ob Benutzer existiert
   const userFound = await User.findOne({ email });
   if (!userFound) {
-    throw new Error("User not found");
+    return res.status(404).json({ message: "User not found" });
   }
 
-  if (userFound && (await userFound.isPasswordMatch(password))) {
-    const {
-      _id: userId,
-      firstName,
-      lastName,
+  // Passwort überprüfen
+  const isPasswordCorrect = await userFound.isPasswordMatch(password);
+  if (!isPasswordCorrect) {
+    return res.status(401).json({ message: "Invalid email or password" });
+  }
+
+  // Token-Daten
+  const { _id: userId, email: userEmail, isAdmin } = userFound;
+
+  // **AccessToken (kurzlebig, z. B. 15 Minuten)**
+  const accessToken = jwt.sign(
+    { userId, isAdmin }, // Minimale Daten
+    process.env.ACCESS_TOKEN,
+    { expiresIn: "15m" } // Kurze Lebensdauer
+  );
+
+  // **RefreshToken (langlebig, z. B. 7 Tage)**
+  const refreshToken = jwt.sign(
+    { userId }, // Nur die userId
+    process.env.REFRESH_TOKEN,
+    { expiresIn: "7d" } // Lange Lebensdauer
+  );
+
+  // RefreshToken in der Datenbank speichern
+  userFound.refreshToken = refreshToken;
+  await userFound.save();
+
+  // RefreshToken im Cookie speichern
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Tage
+    sameSite: "lax",
+  });
+
+  // Antwort mit AccessToken und minimalen User-Daten
+  res.status(200).json({
+    message: "User logged in successfully",
+    accessToken,
+    userInfo: {
+      userId,
       email: userEmail,
-      phone,
-      profile_photo: photo,
       isAdmin,
-      customerNumber,
-    } = userFound;
-
-    const accessToken = jwt.sign(
-      {
-        userId,
-        firstName,
-        lastName,
-        email: userEmail,
-        phone,
-        photo,
-        isAdmin,
-        customerNumber,
-      },
-      process.env.ACCESS_TOKEN,
-      { expiresIn: "10m" }
-    );
-
-    const refreshToken = jwt.sign(
-      {
-        userId,
-        firstName,
-        lastName,
-        email: userEmail,
-        phone,
-        photo,
-        isAdmin,
-        customerNumber,
-      },
-      process.env.REFRESH_TOKEN,
-      { expiresIn: "1d" }
-    );
-
-    userFound.refreshToken = refreshToken;
-    await userFound.save();
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000,
-      sameSite: "lax",
-    });
-
-    const decoded = jwtDecode(accessToken);
-
-    res.status(200).json({
-      message: "User Logged In Successfully",
-      userInfo: decoded,
-    });
-  } else {
-    throw new Error("Invalid email or password");
-  }
+    },
+  });
 });
 
+
 export const userLogout = async (req, res) => {
-  const token = req.cookies.refreshToken;
+  const refreshToken = req.cookies.refreshToken;
 
-  if (!token) {
-    console.error("Fehler: Refresh Token fehlt.");
-    return res.status(401).json({ message: "Refresh token missing" });
+  if (!refreshToken) {
+    return res.status(204).json({ message: "No refresh token found" });
   }
 
-  try {
-    // Benutzer anhand des Tokens finden
-    const user = await User.findOne({ refreshToken: token });
-    if (!user) {
-      console.error("Fehler: Benutzer mit Refresh Token nicht gefunden.");
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // Refresh-Token entfernen
-    user.refreshToken = undefined;
-    await user.save();
-
-    // Cookie löschen
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-    });
-
-    return res.status(200).json({ message: "Logout erfolgreich" });
-  } catch (error) {
-    console.error("Fehler beim Logout:", error.message);
-    return res.status(500).json({ message: "Logout failed" });
+  const user = await User.findOne({ refreshToken });
+  if (!user) {
+    res.clearCookie("refreshToken", { httpOnly: true });
+    return res.status(204).json({ message: "Logout successful" });
   }
+
+  user.refreshToken = null;
+  await user.save();
+
+  res.clearCookie("refreshToken", { httpOnly: true });
+  res.status(200).json({ message: "Logout successful" });
 };
 
+
+
 export const refreshToken = async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.cookies.refreshToken; // Lese RefreshToken aus Cookies
 
   if (!refreshToken) {
     return res.status(401).json({ message: "Refresh token missing" });
   }
 
   try {
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+    // Verifiziere RefreshToken
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
     const user = await User.findById(decoded.userId);
 
     if (!user || user.refreshToken !== refreshToken) {
       return res.status(403).json({ message: "Invalid refresh token" });
     }
 
+    // Neues AccessToken erstellen
     const accessToken = jwt.sign(
-      {
-        userId: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        phone: user.phone,
-        photo: user.profile_photo,
-        isAdmin: user.isAdmin,
-        customerNumber: user.customerNumber,
-      },
-      process.env.ACCESS_TOKEN,
-      { expiresIn: "10s" } 
+      { userId: user._id, isAdmin: user.isAdmin },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" } // Kurzlebiges Token
     );
-
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 10 * 1000, 
-      sameSite: "strict",
-    });
 
     return res.status(200).json({ accessToken });
   } catch (error) {
-    return res.status(403).json({ message: "Invalid refresh token" });
+    return res.status(403).json({
+      message:
+        error.name === "TokenExpiredError"
+          ? "Refresh token expired"
+          : "Invalid refresh token",
+    });
   }
 };
+
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
@@ -451,37 +418,38 @@ export const changePasswordWithEmail = asyncHandler(async (req, res) => {
   }
 });
 
+
+
 export const profilePhotoUpload = asyncHandler(async (req, res) => {
   const userId = req.userId; // Benutzer-ID aus dem Token
- 
+
   if (!req.file) {
     return res.status(400).json({ message: "Keine Datei hochgeladen" });
   }
 
-  const filePath = `${req.protocol}://${req.get(
-    "host"
-  )}/${req.file.path.replace(/\\/g, "/")}`;
+  // Generiere den vollständigen Dateipfad
+  const filePath = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
+  
   try {
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "Benutzer nicht gefunden" });
     }
 
-    // Altes Profilbild löschen (falls vorhanden)
-    if (user.profile_photo && user.profile_photo !== "default_avatar_url") {
-      const oldPath = path.resolve(
-        `./${user.profile_photo.split(req.get("host"))[1]}`
-      );
-
+    // Altes Profilbild löschen, falls es nicht das Standardbild ist
+    if (user.profile_photo && !user.profile_photo.includes("default_avatar_url")) {
+      const oldPath = path.resolve(`.${user.profile_photo.split(req.get("host"))[1]}`);
+      
       if (fs.existsSync(oldPath)) {
         fs.unlinkSync(oldPath);
       }
     }
-  
+
+    // Profilbild im Benutzer aktualisieren
     user.profile_photo = filePath;
     await user.save();
 
-    // Aktualisierte Benutzerinformationen in der Antwort zurückgeben
+    // Erfolgsantwort mit Benutzerinformationen zurückgeben
     res.status(200).json({
       message: "Profilbild erfolgreich aktualisiert",
       userInfo: {
@@ -489,7 +457,7 @@ export const profilePhotoUpload = asyncHandler(async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        profile_photo: user.profile_photo,
+        profile_photo: user.profile_photo, // Das neue Profilbild
         isAdmin: user.isAdmin,
       },
     });
