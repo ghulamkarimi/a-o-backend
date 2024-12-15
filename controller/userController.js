@@ -79,18 +79,18 @@ export const userLogin = asyncHandler(async (req, res) => {
   }
 
   // Token-Daten
-  const { _id: userId, email: userEmail, isAdmin } = userFound;
+  const { _id: userId, email: userEmail, isAdmin, firstName, profile_photo } = userFound;
 
   // **AccessToken (kurzlebig, z. B. 15 Minuten)**
   const accessToken = jwt.sign(
-    { userId, isAdmin }, // Minimale Daten
+    { userId, isAdmin },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: "15m" } // Kurze Lebensdauer
   );
 
   // **RefreshToken (langlebig, z. B. 7 Tage)**
   const refreshToken = jwt.sign(
-    { userId }, // Nur die userId
+    { userId },
     process.env.REFRESH_TOKEN_SECRET,
     { expiresIn: "7d" } // Lange Lebensdauer
   );
@@ -107,18 +107,23 @@ export const userLogin = asyncHandler(async (req, res) => {
     sameSite: "lax",
   });
 
-  // Antwort mit AccessToken und minimalen User-Daten
+  // **Decoded AccessToken für `exp`**
+  const decodedAccessToken = jwt.decode(accessToken);
+
+  // Antwort mit AccessToken und Benutzerinformationen
   res.status(200).json({
     message: "User logged in successfully",
     accessToken,
     userInfo: {
       userId,
       email: userEmail,
+      firstName,
+      profile_photo,
       isAdmin,
+      exp: decodedAccessToken.exp, // Ablaufzeit des Access-Tokens
     },
   });
 });
-
 
 export const userLogout = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
@@ -177,11 +182,23 @@ export const refreshToken = async (req, res) => {
       { expiresIn: "15m" } // Kurzlebiges Token
     );
 
+    // **Decoded AccessToken für `exp`**
+    const decodedAccessToken = jwt.decode(accessToken);
+
+    // Benutzerinformationen
+    const userInfo = {
+      userId: user._id,
+      firstName: user.firstName,
+      profile_photo: user.profile_photo,
+      exp: decodedAccessToken.exp, // Ablaufzeit des Access-Tokens
+    };
+
     // Prüfen, ob das Refresh-Token erneuert werden muss
     const timeRemaining = decoded.exp * 1000 - Date.now(); // Zeit in ms
     let newRefreshToken = refreshToken;
 
-    if (timeRemaining < 60 * 60 * 1000) { // Weniger als 1 Stunde
+    if (timeRemaining < 60 * 60 * 1000) {
+      // Weniger als 1 Stunde
       newRefreshToken = jwt.sign(
         { userId: user._id },
         process.env.REFRESH_TOKEN_SECRET,
@@ -201,16 +218,12 @@ export const refreshToken = async (req, res) => {
       });
     }
 
-    // Setze das neue Access-Token im Cookie
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000, // 15 Minuten
+    // Antwort mit AccessToken und Benutzerinformationen
+    return res.status(200).json({
+      message: "Token refreshed successfully",
+      accessToken,
+      userInfo,
     });
-
-    // Sende die Erfolgsmeldung zurück
-    return res.status(200).json({ message: "Token refreshed successfully" });
   } catch (error) {
     console.error("Error in refreshToken:", error.message);
 
@@ -222,7 +235,6 @@ export const refreshToken = async (req, res) => {
     });
   }
 };
-
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
