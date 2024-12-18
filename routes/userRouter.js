@@ -13,7 +13,7 @@ import {
   refreshToken,
   profilePhotoUpload,
 } from "../controller/userController.js";
-import loginLimiter from "../rateLimit/rateLimiter.js";
+// import loginLimiter from "../rateLimit/rateLimiter.js";
 import { verifyToken } from "../middleware/token/verifyToken.js";
 import { userRegisterValidator } from "../middleware/validator/userValidator.js";
 
@@ -23,7 +23,8 @@ import { upload } from "../middleware/upload.js";
 const userRouter = express.Router();
 
 userRouter.post("/register", userRegisterValidator,userRegister);
-userRouter.post("/login", loginLimiter,userLogin);
+// userRouter.post("/login", loginLimiter,userLogin);
+ userRouter.post("/login",userLogin);
 userRouter.delete("/logout", userLogout);
 userRouter.post("/refreshToken", refreshToken);
 userRouter.get("/allUsers", getAllUsers);
