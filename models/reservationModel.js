@@ -22,7 +22,7 @@ const reservationSchema = mongoose.Schema(
     },
     geburtsdatum: {
       type: String,
-      required: false,
+      required: true,
     },
     email: {
       type: String,
@@ -68,6 +68,12 @@ const reservationSchema = mongoose.Schema(
       type: String,
       enum: ["pending", "completed", "failed"],
       default: "pending",
+    },
+    reservierungStatus: {
+      type: String,
+      enum: ["pending", "completed", "failed"],
+      default: "pending",
+      required: false,
     },
     isBooked: {
       type: Boolean,

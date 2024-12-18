@@ -30,6 +30,10 @@ const carRentSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    isReserviert:{
+      type:Boolean,
+      required: false,
+    },
     carPeople: {
       type: String,
       required: true,
@@ -73,8 +77,9 @@ carRentSchema.virtual("clearBookedSlotsAfterReturn").get(function () {
     const currentDate = new Date();
     
     if (currentDate >= returnDate) {
-      this.bookedSlots = []; // Leere gebuchte Slots bei Rückgabe
-      this.isBooked = false; // Setze das Fahrzeug auf nicht gebucht
+      this.bookedSlots = [];
+      this.isBooked = false; 
+      this.isReserviert=false
     }
   }
   return this.bookedSlots;
@@ -101,6 +106,8 @@ carRentSchema.methods.extendBooking = function (newStart, newEnd) {
   this.bookedSlots.push({ start: newStartDate, end: newEndDate });
   return this.save();
 };
+
+
 
 const carRent = mongoose.model("carRent", carRentSchema);
 export default carRent;
