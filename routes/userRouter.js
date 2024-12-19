@@ -12,6 +12,7 @@ import {
   changePasswordWithEmail,
   refreshToken,
   profilePhotoUpload,
+  refreshTokenExpired
 } from "../controller/userController.js";
 import loginLimiter from "../rateLimit/rateLimiter.js";
 import { verifyToken } from "../middleware/token/verifyToken.js";
@@ -47,6 +48,7 @@ userRouter.put(
   },
   profilePhotoUpload
 );
+userRouter.get("/check-refresh-token", refreshTokenExpired);
 
 
 export default userRouter;

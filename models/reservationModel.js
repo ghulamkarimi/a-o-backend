@@ -71,7 +71,7 @@ const reservationSchema = mongoose.Schema(
     },
     reservierungStatus: {
       type: String,
-      enum: ["pending", "completed", "failed"],
+      enum: ["pending", "completed", "failed","cancelled"],
       default: "pending",
       required: false,
     },
