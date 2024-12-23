@@ -6,6 +6,6 @@ export const dbConnect = async () => {
     console.log('✅ Database connected successfully');
   } catch (error) {
     console.error('❌ Error in connecting to database:', error.message);
-    process.exit(1); // Beendet die App bei einem schwerwiegenden Fehler
+    process.exit(1); 
   }
 };

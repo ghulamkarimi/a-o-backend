@@ -84,7 +84,7 @@ export const uploadMiddleware = (req, res, next) => {
         }
         cb(null, true);
       },
-    }).single('carImage'); // Nur ein Bild
+    }).single('carImage'); 
   } else if (route === 'user') {
     multerInstance = multer({
       storage,

@@ -68,71 +68,60 @@ export const createReservation = asyncHandler(async (req, res) => {
       pickupTime,
       returnTime,
       gesamtPrice,
-      paymentStatus: "pending", // Zahlung ist derzeit im status "pending"
+      paymentStatus: "pending",
     });
 
+    newReservation.reservierungStatus = "completed";
     await newReservation.save();
 
-    // Setze isReserviert auf true für das Fahrzeug
-    carRent.isReserviert = false;
-    await carRent.save();
+    const pickupDateTime = new Date(newReservation.pickupDate);
+    const returnDateTime = new Date(newReservation.returnDate);
 
+    // Gebuchte Slots aktualisieren
+    carRent.bookedSlots = carRent.bookedSlots || [];
+    carRent.bookedSlots.push({
+      start: pickupDateTime,
+      end: returnDateTime,
+    });
+
+    carRent.isReserviert = true;
+    await carRent.save();
+console.log("newReservation._id",newReservation._id)
+    const populatedReservation = await Reservation.findById(newReservation._id)
+      .populate("carRent") // Lädt die Daten des Fahrzeugs
+      .populate("user");
+    
     // E-Mail an den Kunden senden
     const customerMailOptions = {
       from: process.env.EMAIL,
       to: email,
-      subject: "Reservierungsbestätigung",
+      subject: "Reservierung wurde erfolgreich erstellt",
       html: `
-              <div style="font-family: Arial, sans-serif; color: #333;">
-                <h1 style="text-align: center;">Reservierungsbestätigung</h1>
-                <p>Hallo ${vorname} ${nachname},</p>
-                <p>Ihre Reservierung wurde erfolgreich erstellt, aber sie wartet auf Bestätigung.</p>
-                <h2>Details Ihrer Reservierung:</h2>
-                <ul>
-                  <li><strong>Fahrzeug:</strong> ${carRent.carName}</li>
-                  <li><strong>Abholdatum:</strong> ${pickupDate} um ${pickupTime}</li>
-                  <li><strong>Rückgabedatum:</strong> ${returnDate} um ${returnTime}</li>
-                  <li><strong>Gesamtpreis:</strong> ${gesamtPrice} €</li>
-                </ul>
-                <p>Vielen Dank für Ihre Reservierung!</p>
-                 <a href="http://localhost:7001/reservation/reject-reservation/${newReservation._id}" style="background-color: #f44336; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">Ablehnen</a>
-              </div>
-            `,
-    };
-
-    // E-Mail an den Admin senden
-    const adminMailOptions = {
-      from: process.env.EMAIL,
-      to: process.env.EMAIL, // E-Mail-Adresse des Admins
-      subject: "Neue Fahrzeugreservierung",
-      html: `
-              <div style="font-family: Arial, sans-serif; color: #333;">
-                <h1 style="text-align: center;">Neue Fahrzeugreservierung</h1>
-                <p>Eine neue Reservierung wurde erstellt:</p>
-                <ul>
-                  <li><strong>Kunde:</strong> ${vorname} ${nachname}</li>
-                  <li><strong>E-Mail:</strong> ${email}</li>
-                  <li><strong>Fahrzeug:</strong> ${carRent.carName}</li>
-                  <li><strong>Abholdatum:</strong> ${pickupDate} um ${pickupTime}</li>
-                  <li><strong>Rückgabedatum:</strong> ${returnDate} um ${returnTime}</li>
-                  <li><strong>Gesamtpreis:</strong> ${gesamtPrice} €</li>
-                </ul>
-                <p>Für weitere Aktionen können Sie die Reservierung bestätigen oder ablehnen:</p>
-                <p>
-                  <a href="http://localhost:7001/reservation/confirm-reservation/${newReservation._id}" style="background-color: #4CAF50; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; margin-right: 10px;">Bestätigen</a>
-                  <a href="http://localhost:7001/reservation/reject-reservation/${newReservation._id}" style="background-color: #f44336; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">Ablehnen</a>
-                </p>
-              </div>
-            `,
+        <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+          <h1 style="text-align: center; color: #4CAF50;">Herzlichen Glückwunsch! Ihre Reservierung wurde erfolgreich erstellt.</h1>
+          <p>Hallo ${vorname} ${nachname},</p>
+          <p>Vielen Dank, dass Sie sich für unser Fahrzeug entschieden haben. Hier sind die Details Ihrer Reservierung:</p>
+          <ul>
+            <li><strong>Fahrzeug:</strong> ${carRent.carName}</li>
+            <li><strong>Abholdatum:</strong> ${pickupDate} um ${pickupTime}</li>
+            <li><strong>Rückgabedatum:</strong> ${returnDate} um ${returnTime}</li>
+            <li><strong>Gesamtpreis:</strong> ${gesamtPrice} €</li>
+          </ul>
+          <p>Sie haben 24 Stunden nach der Reservierung Zeit, um diese gegebenenfalls abzulehnen, falls Sie Ihre Pläne ändern sollten.</p>
+          <p>Klicken Sie auf den folgenden Link, um die Reservierung abzulehnen:</p>
+          <a href="http://localhost:7001/reservation/reject-reservation/${newReservation._id}" style="background-color: #f44336; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">Reservierung ablehnen</a>
+          <p>Vielen Dank für Ihre Buchung! Wir freuen uns darauf, Ihnen ein tolles Fahrerlebnis zu bieten.</p>
+          <p>Mit freundlichen Grüßen,<br>Das [A und O ] Team</p>
+        </div>
+      `,
     };
 
     // E-Mails senden
     await transporter.sendMail(customerMailOptions);
-    await transporter.sendMail(adminMailOptions);
 
     res.status(201).json({
       message: "Reservierung erfolgreich erstellt und E-Mails versendet.",
-      reservation: newReservation,
+      reservation: populatedReservation,
     });
   } catch (error) {
     console.error("Fehler bei der Reservierung:", error);
@@ -142,151 +131,127 @@ export const createReservation = asyncHandler(async (req, res) => {
   }
 });
 
-// Endpunkt zum Bestätigen der Reservierung
-export const confirmReservation = asyncHandler(async (req, res) => {
-  try {
-    const reservationId = req.params.reservationId;
-
-    // Reservierung finden
-    const reservation = await Reservation.findById(reservationId);
-    if (!reservation) {
-      return res.status(404).json({ message: "Reservierung nicht gefunden." });
-    }
-
-    // Reservierungsstatus aktualisieren
-    reservation.reservierungStatus = "completed";
-
-    await reservation.save();
-
-    // Fahrzeug finden und Slots aktualisieren
-    const carRent = await CarRent.findById(reservation.carRent);
-    if (!carRent) {
-      return res.status(400).json({ message: "Fahrzeug nicht gefunden." });
-    }
-
-    carRent.isReserviert = true;
-    const pickupDateTime = new Date(reservation.pickupDate);
-    const returnDateTime = new Date(reservation.returnDate);
-
-    // Gebuchte Slots aktualisieren
-    carRent.bookedSlots = carRent.bookedSlots || [];
-    carRent.bookedSlots.push({
-      start: pickupDateTime,
-      end: returnDateTime,
-    });
-
-    await carRent.save();
-    const customerMailOptions = {
-      from: process.env.EMAIL,
-      to: reservation.email,
-      subject: "Reservierungsbestätigung",
-      html: `
-              <div style="font-family: Arial, sans-serif; color: #333;">
-                  <h1 style="text-align: center;">Reservierungsbestätigung</h1>
-                  <p>Hallo ${reservation.vorname} ${reservation.nachname},</p>
-                  <p>Ihre Reservierung wurde erfolgreich bestätigt.</p>
-                  <h2>Details Ihrer Reservierung:</h2>
-                  <ul>
-                      <li><strong>Fahrzeug:</strong> ${carRent.carName}</li>
-                      <li><strong>Abholdatum:</strong> ${reservation.pickupDate} um ${reservation.pickupTime}</li>
-                      <li><strong>Rückgabedatum:</strong> ${reservation.returnDate} um ${reservation.returnTime}</li>
-                      <li><strong>Gesamtpreis:</strong> ${reservation.gesamtPrice} €</li>
-                  </ul>
-                  <p>Vielen Dank für Ihre Reservierung!</p>
-              </div>
-          `,
-    };
-
-    // E-Mails senden
-    await transporter.sendMail(customerMailOptions);
-
-    res.status(200).json({ message: "Reservierung bestätigt.", reservation });
-  } catch (error) {
-    console.error("Fehler bei der Bestätigung:", error);
-    res
-      .status(500)
-      .json({ message: "Fehler bei der Bestätigung der Reservierung." });
-  }
-});
 
 // Endpunkt zum Ablehnen der Reservierung
 export const rejectReservation = asyncHandler(async (req, res) => {
   try {
-    const reservationId = req.params.reservationId;
+    const { reservationId } = req.params;
     const reservation = await Reservation.findById(reservationId);
 
     if (!reservation) {
-      return res.status(404).json({ message: "Reservierung nicht gefunden." });
+      return res.status(404).send(`
+        <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+          <h1 style="text-align: center; color: #d9534f;">Reservierung kann nicht storniert werden</h1>
+          <p>Die Reservierung kann nur innerhalb von 24 Stunden nach der Buchung storniert werden.</p>
+        </div>
+      `)
     }
 
-    // Überprüfe, ob der aktuelle Zeitpunkt mehr als 24 Stunden vor dem Abholdatum liegt
-    const pickupDateTime = new Date(reservation.pickupDate);
+    const bookingDateTime = new Date(reservation.createdAt); // Zeit der Buchung
     const currentDateTime = new Date();
-    const timeDiff = pickupDateTime - currentDateTime;
+    const timeDiff = currentDateTime - bookingDateTime; // Zeitdifferenz in Millisekunden
 
-    if (timeDiff <= 24 * 60 * 60 * 1000) { // 24 Stunden in Millisekunden
-      return res.status(400).json({ message: "Die Reservierung kann innerhalb von 24 Stunden vor dem Abholdatum nicht storniert werden." });
+    // Überprüfen, ob weniger als 24 Stunden seit der Buchung vergangen sind
+    if (timeDiff > 24 * 60 * 60 * 1000) { // 24 Stunden in Millisekunden
+      return res.status(400).json({
+        message: "Die Reservierung kann nur innerhalb von 24 Stunden nach der Buchung storniert werden.",
+      });
     }
 
+    // Reservierung stornieren
     reservation.isReserviert = false;
+    reservation.reservierungStatus = "cancelled";
     await reservation.save();
 
+    // Fahrzeug-Slots freigeben
     const carRent = await CarRent.findById(reservation.carRent);
-    carRent.bookedSlots = [];
-    carRent.isReserviert = false;
-    
+    carRent.bookedSlots = carRent.bookedSlots.filter(slot => {
+      return !(slot.start <= new Date(reservation.pickupDate) && slot.end >= new Date(reservation.pickupDate));
+    });
 
+    carRent.isReserviert = false;
     await carRent.save();
 
-    // E-Mail an den Kunden senden
+    // E-Mails senden
     const customerMailOptions = {
       from: process.env.EMAIL,
       to: reservation.email,
       subject: "Reservierung storniert",
       html: `
-              <div style="font-family: Arial, sans-serif; color: #333;">
-                <h1 style="text-align: center;">Stornierungsbestätigung</h1>
-                <p>Hallo ${reservation.vorname} ${reservation.nachname},</p>
-                <p>Ihre Reservierung wurde storniert, da Sie diese innerhalb von 24 Stunden vor dem Abholdatum abgelehnt haben.</p>
-                <p>Für weitere Informationen wenden Sie sich bitte an den Kundenservice.</p>
-              </div>
-            `,
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h1 style="text-align: center; color: #d9534f;">Reservierungsstornierung</h1>
+          <p>Sehr geehrte/r ${reservation.vorname} ${reservation.nachname},</p>
+          <p>Leider müssen wir Ihnen mitteilen, dass Ihre Reservierung für das Fahrzeug "${reservation.carRent.carName}" am ${reservation.pickupDate} um ${reservation.pickupTime} storniert wurde.</p>
+          <p>Da Sie die Reservierung innerhalb von 24 Stunden nach der Buchung abgelehnt haben, konnten wir diese fortsetzen.</p>
+          <p>Für weitere Informationen wenden Sie sich bitte an unseren Kundenservice.</p>
+          <h2>Details der Reservierung:</h2>
+          <ul>
+            <li><strong>Fahrzeug:</strong> ${reservation.carRent.carName}</li>
+            <li><strong>Abholdatum:</strong> ${reservation.pickupDate} um ${reservation.pickupTime}</li>
+            <li><strong>Rückgabedatum:</strong> ${reservation.returnDate} um ${reservation.returnTime}</li>
+            <li><strong>Gesamtpreis:</strong> ${reservation.gesamtPrice} €</li>
+          </ul>
+          <p>Vielen Dank für Ihr Verständnis.</p>
+          <p>Mit freundlichen Grüßen,<br>Das [A und O AutoDoc] Team</p>
+        </div>
+      `,
     };
 
-    // E-Mail an den Admin senden
     const adminMailOptions = {
       from: process.env.EMAIL,
-      to: "khalil.haouas@gmail.com", // E-Mail-Adresse des Admins
+      to: "khalil.haouas@gmail.com",
       subject: "Reservierung abgelehnt",
       html: `
-              <div style="font-family: Arial, sans-serif; color: #333;">
-                <h1 style="text-align: center;">Reservierung abgelehnt</h1>
-                <p>Eine Reservierung wurde storniert:</p>
-                <ul>
-                  <li><strong>Kunde:</strong> ${reservation.vorname} ${reservation.nachname}</li>
-                  <li><strong>E-Mail:</strong> ${reservation.email}</li>
-                  <li><strong>Fahrzeug:</strong> ${carRent.carName}</li>
-                  <li><strong>Abholdatum:</strong> ${reservation.pickupDate} um ${reservation.pickupTime}</li>
-                  <li><strong>Rückgabedatum:</strong> ${reservation.returnDate} um ${reservation.returnTime}</li>
-                  <li><strong>Gesamtpreis:</strong> ${reservation.gesamtPrice} €</li>
-                </ul>
-                <p>Für weitere Informationen wenden Sie sich bitte an den Kundenservice.</p>
-              </div>
-            `,
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          <h1 style="text-align: center; color: #d9534f;">Reservierungsstornierung</h1>
+          <p>Hallo Admin,</p>
+          <p>Eine Reservierung wurde storniert:</p>
+          <ul>
+            <li><strong>Kunde:</strong> ${reservation.vorname} ${reservation.nachname}</li>
+            <li><strong>E-Mail:</strong> ${reservation.email}</li>
+            <li><strong>Fahrzeug:</strong> ${reservation.carRent.carName}</li>
+            <li><strong>Abholdatum:</strong> ${reservation.pickupDate} um ${reservation.pickupTime}</li>
+            <li><strong>Rückgabedatum:</strong> ${reservation.returnDate} um ${reservation.returnTime}</li>
+            <li><strong>Gesamtpreis:</strong> ${reservation.gesamtPrice} €</li>
+          </ul>
+          <p>Der Kunde hat die Reservierung storniert, weil sie innerhalb von 24 Stunden nach der Buchung abgelehnt wurde.</p>
+          <p>Für weitere Informationen wenden Sie sich bitte an den Kundenservice.</p>
+          <p>Mit freundlichen Grüßen,<br>Das [A und O] Team</p>
+        </div>
+      `,
     };
 
-    // E-Mails senden
     await transporter.sendMail(customerMailOptions);
     await transporter.sendMail(adminMailOptions);
 
-    res.status(200).json({ message: "Reservierung abgelehnt und E-Mails versendet." });
+    // Reservierung löschen
+    await Reservation.findByIdAndDelete(reservationId);
+
+    res
+      .status(200)
+      .send(`
+        <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+          <h1 style="text-align: center; color: #4CAF50;">Reservierung erfolgreich storniert</h1>
+          <p>Die Reservierung wurde storniert, und eine E-Mail wurde an den Kunden gesendet.</p>
+          <a href="/reservation" style="background-color: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px;">Zurück zu den Reservierungen</a>
+        </div>
+      `);
   } catch (error) {
     console.error("Fehler bei der Ablehnung:", error);
     res
       .status(500)
-      .json({ message: "Fehler bei der Ablehnung der Reservierung." });
+      send(`
+        <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
+          <h1 style="text-align: center; color: #d9534f;">Fehler</h1>
+          <p>Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.</p>
+        </div>
+      `);
   }
 });
+
+
+
+
 
 export const updateReservationStatus = asyncHandler(async (req, res) => {
   const { reservationId } = req.params; // Erwartet die Reservierungs-ID aus der URL

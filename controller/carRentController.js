@@ -16,8 +16,6 @@ export const getCarRentById = asyncHandler(async (req, res) => {
     res.status(404).json({ message: "Car Rent not found" });
   }
 });
-import fs from "fs";
-import path from "path";
 
 export const createCarRent = asyncHandler(async (req, res) => {
   const {
@@ -29,48 +27,52 @@ export const createCarRent = asyncHandler(async (req, res) => {
     carGear,
     isBooked,
     userId,
+    bookedSlots,
   } = req.body;
 
   try {
-    // Prüfen, ob der Benutzer Admin-Rechte hat
-    const user = await checkAdmin(userId);
-    console.log("user:", user);
 
-    // Prüfen, ob eine Datei hochgeladen wurde
-    if (!req.file) {
-      return res.status(400).json({ message: "Keine Datei hochgeladen" });
+    const rentalDays = bookedSlots.reduce((totalDays, slot) => {
+      const startDate = new Date(slot.start);
+      const endDate = new Date(slot.end);
+      const diffInTime = endDate.getTime() - startDate.getTime();
+      const diffInDays = diffInTime / (1000 * 3600 * 24); 
+      return totalDays + diffInDays;
+    }, 0);
+
+    const totalPrice = rentalDays * parseFloat(carPrice); 
+
+    if (rentalDays < 1) {
+      rentalDays = 1;
+     
     }
-
-    // Bild-URL erstellen
-    const imageUrl = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
-    console.log("imageUrl:", imageUrl);
-
-    
-    // Neues Auto erstellen oder vorhandenes aktualisieren
-    const carRent = await CarRent.findOneAndUpdate(
-      { carName }, // Filter: Aktualisieren nach carName (oder anderer ID)
-      {
-        carName,
-        carAC,
-        carPrice,
-        carDoors,
-        carPeople,
-        carGear,
-        isBooked,
-        carImage: imageUrl, // Neues Bild speichern
-        userId: user._id,
-      },
-      { new: true, upsert: true } // Neues erstellen, falls nicht vorhanden
+    const user = await checkAdmin(userId);
+    console.log("userid",userId)
+    const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5001}`;
+    const imageUrl = req.files.carImages.map((file) =>
+      `${BASE_URL}/${file.path.replace(/\\/g, '/')}` 
     );
-
-    // Erfolgsantwort senden
-    res.status(201).json({
-      message: "Auto erfolgreich erstellt/aktualisiert",
-      carRent,
+   
+    const carRent = new CarRent({
+      carName,
+      carAC,
+      carPrice,
+      carDoors,
+      carPeople,
+      carPrice,
+      carImages: imageUrl,
+      carGear,
+      isBooked,
+      carImage: imageUrl,
+      user: user._id,
+      bookedSlots,
+      totalPrice,
     });
+    const createdCarRent = await carRent.save();
+    res.status(201).json(createdCarRent);
   } catch (error) {
-    console.error("Error in createCarRent:", error.message);
-    res.status(500).json({ message: "Interner Serverfehler" });
+    console.log("Error in createCarRent", error.message);
+    res.status(400);
   }
 });
 
@@ -106,48 +108,54 @@ export const deleteCarRent = asyncHandler(async (req, res) => {
 });
 
 export const updateCarRent = asyncHandler(async (req, res) => {
-  const { carName, carPrice, carAC, carDoors, carPeople, carGear, isBooked, userId, carId } = req.body;
+  const {
+    carName,
+    carPrice,
+    carImage,
+    carAC,
+    carDoors,
+    carPeople,
+    carGear,
+    isBooked,
+    userId,
+    carId,
+  } = req.body;
 
-  if (!carId || !mongoose.Types.ObjectId.isValid(carId)) {
-    return res.status(400).json({ message: "Ungültige Auto-ID" });
+  if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+    res.status(400).json({ message: "Invalid User Id" });
+    return;
   }
+  if (!carId || !mongoose.Types.ObjectId.isValid(carId)) {
+    res.status(400).json({ message: "Invalid Car Id" });
+    return;
+  }
+  console.log("userId:", userId);
+  console.log("carId:", carId);
 
   try {
     const user = await checkAdmin(userId);
+    if (!user) {
+      res.status(400).json({ message: "Invalid User" });
+      return;
+    }
     const carRent = await CarRent.findById(carId);
-
     if (!carRent) {
-      return res.status(404).json({ message: "Auto nicht gefunden" });
+      res.status(404).json({ message: "Car Rent not found" });
+      return;
     }
-
-    // Bild aktualisieren, falls ein neues hochgeladen wird
-    let imageUrl = carRent.carImage; // Altes Bild behalten
-    if (req.file) {
-      // Neues Bild speichern
-      imageUrl = `${req.protocol}://${req.get("host")}/${req.file.path.replace(/\\/g, "/")}`;
-
-      // Altes Bild löschen
-      const oldImagePath = path.resolve(`.${carRent.carImage.split(req.get("host"))[1]}`);
-      if (fs.existsSync(oldImagePath)) {
-        fs.unlinkSync(oldImagePath);
-      }
-    }
-
-    // Felder aktualisieren
     carRent.carName = carName || carRent.carName;
     carRent.carPrice = carPrice || carRent.carPrice;
-    carRent.carImage = imageUrl;
+    carRent.carImage = carImage || carRent.carImage;
     carRent.carAC = carAC !== undefined ? carAC : carRent.carAC;
     carRent.carDoors = carDoors || carRent.carDoors;
     carRent.carPeople = carPeople || carRent.carPeople;
     carRent.carGear = carGear || carRent.carGear;
     carRent.isBooked = isBooked !== undefined ? isBooked : carRent.isBooked;
-
     const updatedCarRent = await carRent.save();
-    res.json({ message: "Auto erfolgreich aktualisiert", carRent: updatedCarRent });
+    res.json(updatedCarRent);
   } catch (error) {
-    console.error("Error in updateCarRent:", error.message);
-    res.status(500).json({ message: "Interner Serverfehler" });
+    console.log("Error in updateCarRent", error.message);
+    res.status(400).json({ message: "Error updating car rent" });
   }
 });
 

@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { createCarRent,getCarRents,deleteCarRent,getCarRentById, updateCarRent, getCarRentByUser} from "../controller/carRentController.js";
-import { uploadMiddleware ,handleUploadErrors} from "../middleware/upload.js";
- 
+import { uploadMiddleware ,  handleUploadErrors,} from '../middleware/upload.js';
 
 const carRentRouter = Router();
 
