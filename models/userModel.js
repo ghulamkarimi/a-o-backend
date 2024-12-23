@@ -38,7 +38,7 @@ const userSchema = mongoose.Schema(
     verificationCodeExpires: {
       type: Date,
     },
-    refreshToken: {
+    access_token: {
       type: String,
     },
     isAccountVerified: {

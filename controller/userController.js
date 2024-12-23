@@ -6,7 +6,7 @@ import { sendVerificationLinkToEmail } from "../email/mailSender.js";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcrypt";
-import { userInfo } from "os";
+
 
 export const generateUniqueCustomerNumber = async () => {
   let isUnique = false;
@@ -63,10 +63,10 @@ export const userRegister = asyncHandler(async (req, res) => {
 });
 
 export const userLogin = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email: userEmail, password } = req.body;
 
   // Prüfe, ob Benutzer existiert
-  const userFound = await User.findOne({ email });
+  const userFound = await User.findOne({ email:userEmail });
   if (!userFound) {
     return res.status(404).json({ message: "User not found" });
   }
@@ -80,36 +80,40 @@ export const userLogin = asyncHandler(async (req, res) => {
   // Token-Daten
   const {
     _id: userId,
-    email: userEmail,
+    email,
     isAdmin,
     firstName,
     lastName,
     profile_photo,
   } = userFound;
 
-  // **AccessToken (kurzlebig, z. B. 15 Minuten)**
+  
   const accessToken = jwt.sign(
     { userId, firstName, lastName, email, profile_photo, isAdmin },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: "15m" } // Kurze Lebensdauer
+    { expiresIn: "7d" } 
   );
 
-  // **RefreshToken (langlebig, z. B. 7 Tage)**
+
   const refreshToken = jwt.sign(
     { userId, firstName, lastName, email, profile_photo, isAdmin },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "15m" }
   );
 
-  // RefreshToken in der Datenbank speichern
+  // accessToken in der Datenbank speichern
   const user = await User.findByIdAndUpdate(userId,{
-    refreshToken:refreshToken
+    access_token:accessToken
   })
-  user.refreshToken = refreshToken;
-  await user.save();
 
-  // RefreshToken im Cookie speichern
-  res.cookie("refreshToken", refreshToken, {
+  console.log("userLogin",user)
+  userFound.access_token = accessToken;
+  await userFound.save();
+
+
+
+
+  res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 Tage
@@ -122,82 +126,40 @@ export const userLogin = asyncHandler(async (req, res) => {
   // Antwort mit AccessToken und Benutzerinformationen
   res.status(200).json({
     message: "User logged in successfully",
-    token:accessToken,
+    token:refreshToken,
     userInfo:decodedAccessToken,
-    user:user
-
+user:user
   });
 });
 
-export const userLogout = async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
-  console.log("refreshToken",refreshToken)
-
-  if(!refreshToken) throw new Error("no token");
-
-  const user = await User.findOne({refreshToken:refreshToken})
+export const userLogout = asyncHandler(async (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) throw new Error("no token");
+  const user = await User.findOne({ access_token: token });
   if (!user) throw new Error("No User");
-user.refreshToken = undefined
-await user.save()
+  user.access_token = "";
+  await user.save();
+  res.clearCookie("accessToken");
+  res.json({ message: "logout Successful" });
+});
 
-res.clearCookie("refreshToken");
-res.json({ message: "logout Successful" });
-  
-};
 
-export const refreshTokenExpired = asyncHandler(
-  async (req, res) => {
-    const token = req.cookies.refreshToken;
-    if (!token) throw new Error("du muss loggin machen  ");
-
-    const user = await User.findOne({ refreshToken: token });
-    if (!user) throw new Error("user ist nicht mehr loggin");
-    res.json({ user: user, message: "user is loggin" });
+export const accessTokenExpired = asyncHandler(async (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) {
+    return res.status(401).json({ message: "User ist nicht mehr eingeloggt" });
   }
-);
 
-export const refreshToken = asyncHandler(
-  async (req , res ) => {
-      const token = req.cookies.refreshToken;
-      if (!token) throw new Error("Access token not provided");
-      const user = await User.findOne({ refreshToken: token });
-      if (!user) throw new Error("User not found");
-
-      jwt.verify(
-        token,
-        process.env.REFRESH_TOKEN_SECRET,
-        (err, decoded) => {
-            if (err) throw new Error("Access token verification failed");
-          const {
-            _id: userId,
-            firstName,
-            lastName,
-            email,
-            isAccountVerified,
-            isAdmin,
-            profile_photo: photo,
-          } = user;
-          const refreshToken = jwt.sign(
-            {
-              userId,
-              firstName,
-              lastName,
-              email,
-              isAccountVerified,
-              isAdmin,
-              photo,
-            },
-            process.env.ACCESS_TOKEN_SECRET ,
-            {
-              expiresIn: "30s",
-            }
-          );
-          res.json({ refreshToken });
-        }
-      );
-   
+  const user = await User.findOne({ access_token: token });
+  if (!user) {
+    return res.status(401).json({ message: "User ist nicht mehr eingeloggt" });
   }
-);
+
+  res.status(200).json({ user, message: "User ist eingeloggt" });
+});
+
+
+
 
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
