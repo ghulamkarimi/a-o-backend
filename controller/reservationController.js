@@ -53,8 +53,8 @@ export const createReservation = asyncHandler(async (req, res) => {
 
     // Erstelle die neue Reservierung
     const newReservation = new Reservation({
-      carRent: carRentId,
-      user: user ? user._id : null,
+      carRent: CarRent ? carRent._id : new mongoose.Types.ObjectId(),
+      user: user ? user._id : new mongoose.Types.ObjectId(),
       vorname,
       nachname,
       geburtsdatum,
@@ -248,19 +248,18 @@ export const rejectReservation = asyncHandler(async (req, res) => {
       `);
   }
 });
-
-
-
-
-
+ 
 export const updateReservationStatus = asyncHandler(async (req, res) => {
-  const { reservationId } = req.params; // Erwartet die Reservierungs-ID aus der URL
-  const { paymentStatus, isBooked } = req.body; // Erwartet die neuen Werte im Body der Anfrage
+  const { reservationId } = req.params; 
+  console.log("reservationId",reservationId)
+  const { paymentStatus, isBooked } = req.body; 
+  console.log("paymentStatus",paymentStatus)
+
 
   try {
     // Reservierung finden
     const reservation = await Reservation.findById(reservationId);
-
+   console.log("reservation",reservation)
     if (!reservation) {
       return res.status(404).json({ message: "Reservierung nicht gefunden." });
     }
@@ -285,8 +284,10 @@ export const updateReservationStatus = asyncHandler(async (req, res) => {
 
 export const getAllReservation = asyncHandler(async (req, res) => {
   try {
-    const reservations = await Reservation.find();
-    res.status(200).json({ reservation: reservations });
+    const reservations = await Reservation.find().populate("user")
+    .populate("carRent"); 
+    res.status(200).json({ reservation: reservations || [] });
+    
   } catch (error) {
     throw new Error("reservation not found");
   }
