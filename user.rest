@@ -50,12 +50,19 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzVlZ
 }
 
 #### delete user
-DELETE http://localhost:7001/user/deleteaccount
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzUyZTc3ZGI2OWM0Mjc0MDU3ZTEzYTQiLCJmaXJzdE5hbWUiOiJHaHVsYW0gSG9zc2VpbiIsImxhc3ROYW1lIjoiS2FyaW1pIiwiZW1haWwiOiJrYXJpbWlhbWlyaG9zc2VpbjEyQGdtYWlsLmNvbSIsInBob3RvIjoiaHR0cDovL2xvY2FsaG9zdDo3MDAxL2ltYWdlcy91c2VySW1hZ2VzLzE3MzM0ODY1MzIxMTItMTAwNTMwMzc3LmpwZyIsImlzQWRtaW4iOmZhbHNlLCJpYXQiOjE3MzM0ODcxMzIsImV4cCI6MTczMzQ4NzczMn0.fqqA2KSpQlK4mbFxpySEZ9AGyg1Abykbbb14qRrlw34jmQ
+DELETE  http://localhost:7001/user/deleteaccount
+Content-Type: application/json
+
+{
+   "userId":"676bc939eb094f622e3523f9",
+   "adminId":"67652d7ee380fb4136b7268f"
+} 
+
+
 
 #### change password user by logged in user
 PUT http://localhost:7001/user/changePassword
-Authorization : Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NzBiMDQ0Zjk2MzBlNWE2ZGFjNDlkZWEiLCJmaXJzdE5hbWUiOiJhbWlyYWxpIiwibGFzdE5hbWUiOiJob3NzZWluaSIsImVtYWlsIjoiYW1nZ2dAZ21haWwuY29tIiwicGhvbmUiOiIxMjM0NTY3IiwiaXNBZG1pbiI6dHJ1ZSwiaWF0IjoxNzI4Nzc2ODUwLCJleHAiOjE3MzEzNjg4NTB9.gitXR8BNMU-hcKdl6BgwifaW-eeaBCLG9SyR-WuxSy0
+
 Content-Type: application/json
 
 {

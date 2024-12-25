@@ -1,11 +1,11 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
-import { jwtDecode } from "jwt-decode";
 import { sendVerificationLinkToEmail } from "../email/mailSender.js";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcrypt";
+import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 
 
 export const generateUniqueCustomerNumber = async () => {
@@ -159,8 +159,6 @@ export const accessTokenExpired = asyncHandler(async (req, res) => {
 });
 
 
-
-
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
     const users = await User.find();
@@ -220,13 +218,26 @@ export const changePasswordByLoginUser = asyncHandler(async (req, res) => {
   }
 });
 
-export const deleteAccount = asyncHandler(async (req, res) => {
-  const userId = req.userId;
+ 
+ 
 
-  if (!userId) {
-    return res.status(401).json({ message: "Authentifizierung erforderlich." });
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const { userId, adminId } = req.body;  // userId und adminId aus dem Body
+
+  // Überprüfen, ob userId und adminId im Body vorhanden sind
+  if (!userId || !adminId) {
+    return res.status(400).json({ message: "Benutzer-ID und Admin-ID erforderlich." });
   }
+
   try {
+    // Admin-Check aufrufen und sicherstellen, dass der Admin berechtigt ist
+    await checkAdmin(adminId);
+  } catch (error) {
+    return res.status(403).json({ message: error.message });
+  }
+
+  try {
+    // Benutzer finden und löschen
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "Benutzer nicht gefunden." });
@@ -237,43 +248,25 @@ export const deleteAccount = asyncHandler(async (req, res) => {
       user.profile_photo &&
       !user.profile_photo.includes("default_avatar_url")
     ) {
-      const relativePath = user.profile_photo.split(
-        `${req.protocol}://${req.get("host")}/`
-      )[1];
-      if (relativePath) {
-        const filePath = path.join(process.cwd(), relativePath);
-
-        fs.unlink(filePath, (err) => {
-          if (err) {
-            console.error("Fehler beim Löschen des Profilbildes:", err.message);
-          } else {
-            console.log(`Profilbild gelöscht: ${filePath}`);
-          }
-        });
+      try {
+        const relativePath = user.profile_photo.split(
+          `${req.protocol}://${req.get("host")}/`
+        )[1];
+        if (relativePath) {
+          const filePath = path.join(process.cwd(), relativePath);
+          await fs.promises.unlink(filePath);  // Profilbild asynchron löschen
+          console.log(`Profilbild gelöscht: ${filePath}`);
+        }
+      } catch (err) {
+        console.error("Fehler beim Löschen des Profilbildes:", err.message);
       }
     }
 
     // Benutzerkonto löschen
     await User.findByIdAndDelete(userId);
 
-    // Cookies entfernen
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/", // Gleicher Pfad wie beim Setzen des Cookies
-    });
-
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/refresh", // Gleicher Pfad wie beim Setzen des Cookies
-    });
-
     res.status(200).json({
-      message:
-        "Ihr Konto wurde erfolgreich gelöscht. Alle zugehörigen Daten wurden entfernt.",
+      message: "Benutzerkonto erfolgreich gelöscht.",
     });
   } catch (error) {
     console.error("Fehler beim Löschen des Kontos:", error.message);
