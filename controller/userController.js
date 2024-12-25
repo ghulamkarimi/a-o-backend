@@ -222,51 +222,53 @@ export const changePasswordByLoginUser = asyncHandler(async (req, res) => {
  
 
 export const deleteAccount = asyncHandler(async (req, res) => {
-  const { userId, adminId } = req.body;  // userId und adminId aus dem Body
+  const userId = req.userId; // Authentifizierter Benutzer
+  const { targetUserId } = req.params; // Zielbenutzer-ID aus den Parametern
 
-  // Überprüfen, ob userId und adminId im Body vorhanden sind
-  if (!userId || !adminId) {
-    return res.status(400).json({ message: "Benutzer-ID und Admin-ID erforderlich." });
+  if (!userId) {
+    return res.status(401).json({ message: "Authentifizierung erforderlich." });
   }
 
   try {
-    // Admin-Check aufrufen und sicherstellen, dass der Admin berechtigt ist
-    await checkAdmin(adminId);
-  } catch (error) {
-    return res.status(403).json({ message: error.message });
-  }
-
-  try {
-    // Benutzer finden und löschen
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Benutzer nicht gefunden." });
+    const loginUser = await User.findById(userId); // Überprüfen, ob der authentifizierte Benutzer existiert
+    if (!loginUser) {
+      return res.status(404).json({ message: "Authentifizierter Benutzer nicht gefunden." });
     }
 
-    // Profilbild löschen, falls vorhanden
-    if (
-      user.profile_photo &&
-      !user.profile_photo.includes("default_avatar_url")
-    ) {
-      try {
-        const relativePath = user.profile_photo.split(
-          `${req.protocol}://${req.get("host")}/`
-        )[1];
-        if (relativePath) {
-          const filePath = path.join(process.cwd(), relativePath);
-          await fs.promises.unlink(filePath);  // Profilbild asynchron löschen
-          console.log(`Profilbild gelöscht: ${filePath}`);
-        }
-      } catch (err) {
-        console.error("Fehler beim Löschen des Profilbildes:", err.message);
+    // Prüfen, ob der Benutzer Admin ist oder versucht, sein eigenes Konto zu löschen
+    if (!loginUser.isAdmin && userId.toString() !== targetUserId) {
+      return res.status(403).json({ message: "Keine Berechtigung, diesen Vorgang durchzuführen." });
+    }
+
+    const targetUser = await User.findById(targetUserId); // Zielbenutzer finden
+    if (!targetUser) {
+      return res.status(404).json({ message: "Zielbenutzer nicht gefunden." });
+    }
+
+    // Profilbild löschen, wenn es nicht das Standardbild ist
+    if (targetUser.profile_photo && !targetUser.profile_photo.includes("default_avatar_url")) {
+      const relativePath = targetUser.profile_photo.split(`${req.protocol}://${req.get("host")}/`)[1];
+      if (relativePath) {
+        const filePath = path.join(process.cwd(), relativePath);
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            console.error("Fehler beim Löschen des Profilbildes:", err.message);
+          } else {
+            console.log(`Profilbild gelöscht: ${filePath}`);
+          }
+        });
       }
     }
 
-    // Benutzerkonto löschen
-    await User.findByIdAndDelete(userId);
+    // Zielbenutzer löschen
+    await User.findByIdAndDelete(targetUserId);
+
+
+
+
 
     res.status(200).json({
-      message: "Benutzerkonto erfolgreich gelöscht.",
+      message: "Das Konto wurde erfolgreich gelöscht. Alle zugehörigen Daten wurden entfernt.",
     });
   } catch (error) {
     console.error("Fehler beim Löschen des Kontos:", error.message);
