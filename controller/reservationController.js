@@ -4,6 +4,15 @@ import User from "../models/userModel.js";
 import Reservation from "../models/reservationModel.js";
 import nodeMailer from "nodemailer";
 import dotenv from "dotenv";
+import { checkAdmin } from "../middleware/validator/checkAdmin.js";
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+
+
+
+
 dotenv.config();
 
 // Nodemailer-Transporter-Konfiguration
@@ -86,11 +95,11 @@ export const createReservation = asyncHandler(async (req, res) => {
 
     carRent.isReserviert = true;
     await carRent.save();
-console.log("newReservation._id",newReservation._id)
+    console.log("newReservation._id", newReservation._id);
     const populatedReservation = await Reservation.findById(newReservation._id)
       .populate("carRent") // Lädt die Daten des Fahrzeugs
       .populate("user");
-    
+
     // E-Mail an den Kunden senden
     const customerMailOptions = {
       from: process.env.EMAIL,
@@ -131,7 +140,6 @@ console.log("newReservation._id",newReservation._id)
   }
 });
 
-
 // Endpunkt zum Ablehnen der Reservierung
 export const rejectReservation = asyncHandler(async (req, res) => {
   try {
@@ -144,7 +152,7 @@ export const rejectReservation = asyncHandler(async (req, res) => {
           <h1 style="text-align: center; color: #d9534f;">Reservierung kann nicht storniert werden</h1>
           <p>Die Reservierung kann nur innerhalb von 24 Stunden nach der Buchung storniert werden.</p>
         </div>
-      `)
+      `);
     }
 
     const bookingDateTime = new Date(reservation.createdAt); // Zeit der Buchung
@@ -152,9 +160,11 @@ export const rejectReservation = asyncHandler(async (req, res) => {
     const timeDiff = currentDateTime - bookingDateTime; // Zeitdifferenz in Millisekunden
 
     // Überprüfen, ob weniger als 24 Stunden seit der Buchung vergangen sind
-    if (timeDiff > 24 * 60 * 60 * 1000) { // 24 Stunden in Millisekunden
+    if (timeDiff > 24 * 60 * 60 * 1000) {
+      // 24 Stunden in Millisekunden
       return res.status(400).json({
-        message: "Die Reservierung kann nur innerhalb von 24 Stunden nach der Buchung storniert werden.",
+        message:
+          "Die Reservierung kann nur innerhalb von 24 Stunden nach der Buchung storniert werden.",
       });
     }
 
@@ -165,8 +175,11 @@ export const rejectReservation = asyncHandler(async (req, res) => {
 
     // Fahrzeug-Slots freigeben
     const carRent = await CarRent.findById(reservation.carRent);
-    carRent.bookedSlots = carRent.bookedSlots.filter(slot => {
-      return !(slot.start <= new Date(reservation.pickupDate) && slot.end >= new Date(reservation.pickupDate));
+    carRent.bookedSlots = carRent.bookedSlots.filter((slot) => {
+      return !(
+        slot.start <= new Date(reservation.pickupDate) &&
+        slot.end >= new Date(reservation.pickupDate)
+      );
     });
 
     carRent.isReserviert = false;
@@ -227,9 +240,7 @@ export const rejectReservation = asyncHandler(async (req, res) => {
     // Reservierung löschen
     await Reservation.findByIdAndDelete(reservationId);
 
-    res
-      .status(200)
-      .send(`
+    res.status(200).send(`
         <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
           <h1 style="text-align: center; color: #4CAF50;">Reservierung erfolgreich storniert</h1>
           <p>Die Reservierung wurde storniert, und eine E-Mail wurde an den Kunden gesendet.</p>
@@ -238,9 +249,8 @@ export const rejectReservation = asyncHandler(async (req, res) => {
       `);
   } catch (error) {
     console.error("Fehler bei der Ablehnung:", error);
-    res
-      .status(500)
-      send(`
+    res.status(500);
+    send(`
         <div style="font-family: Arial, sans-serif; color: #333; padding: 20px;">
           <h1 style="text-align: center; color: #d9534f;">Fehler</h1>
           <p>Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.</p>
@@ -248,18 +258,17 @@ export const rejectReservation = asyncHandler(async (req, res) => {
       `);
   }
 });
- 
-export const updateReservationStatus = asyncHandler(async (req, res) => {
-  const { reservationId } = req.params; 
-  console.log("reservationId",reservationId)
-  const { paymentStatus, isBooked } = req.body; 
-  console.log("paymentStatus",paymentStatus)
 
+export const updateReservationStatus = asyncHandler(async (req, res) => {
+  const { reservationId } = req.params;
+  console.log("reservationId", reservationId);
+  const { paymentStatus, isBooked } = req.body;
+  console.log("paymentStatus", paymentStatus);
 
   try {
     // Reservierung finden
     const reservation = await Reservation.findById(reservationId);
-   console.log("reservation",reservation)
+    console.log("reservation", reservation);
     if (!reservation) {
       return res.status(404).json({ message: "Reservierung nicht gefunden." });
     }
@@ -284,11 +293,174 @@ export const updateReservationStatus = asyncHandler(async (req, res) => {
 
 export const getAllReservation = asyncHandler(async (req, res) => {
   try {
-    const reservations = await Reservation.find().populate("user")
-    .populate("carRent"); 
+    const reservations = await Reservation.find()
+      .populate("user")
+      .populate("carRent");
     res.status(200).json({ reservation: reservations || [] });
-    
   } catch (error) {
     throw new Error("reservation not found");
+  }
+});
+
+export const rejectReservationByAdmin = asyncHandler(async (req, res) => {
+  const { reservationId, email, userId } = req.body;
+  try {
+    await checkAdmin(userId);
+
+    const reservation = await Reservation.findById(reservationId).populate(
+      "carRent"
+    );
+    if (!reservation || !reservation.carRent) {
+      return res.status(404).json({
+        message: "Reservierung nicht gefunden oder bereits storniert.",
+      });
+    }
+
+    reservation.isReserviert = false;
+    reservation.reservierungStatus = "cancelled";
+    await reservation.save();
+
+    const carRent = await CarRent.findById(reservation.carRent);
+    if (!carRent) {
+      return res.status(404).json({ message: "Fahrzeug nicht gefunden." });
+    }
+    carRent.bookedSlots = carRent.bookedSlots.filter((slot) => {
+      return !(
+        new Date(slot.start).getTime() <=
+          new Date(reservation.pickupDate).getTime() &&
+        new Date(slot.end).getTime() >=
+          new Date(reservation.returnDate).getTime()
+      );
+    });
+
+    carRent.isReserviert = false;
+    await carRent.save();
+
+    const formattedPickupDate = new Date(
+      reservation.pickupDate
+    ).toLocaleDateString("de-DE", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const formattedPickupTime = reservation.pickupTime
+      ? new Date(
+          `1970-01-01T${reservation.pickupTime.replace(" Uhr", "")}`
+        ).toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "00:00 Uhr";
+
+    const formattedReturnDate = new Date(
+      reservation.returnDate
+    ).toLocaleDateString("de-DE", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    const formattedReturnTime = reservation.returnTime
+      ? new Date(
+          `1970-01-01T${reservation.returnTime.replace(" Uhr", "")}`
+        ).toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "00:00 Uhr";
+
+
+    
+      
+      // Erforderliche Variablen
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = path.dirname(__filename);
+      
+      // Bildpfad und Name ermitteln
+      const carImageUrl = reservation.carRent.carImage;
+      const carImageName = carImageUrl.split('/').pop();
+      const imagePath = path.join(__dirname, `../images/carRentImages/${carImageName}`);
+      
+      // Bild in Base64 konvertieren
+      let base64Image = '';
+      
+      if (fs.existsSync(imagePath)) {
+        const imageBuffer = fs.readFileSync(imagePath);
+        base64Image = imageBuffer.toString('base64');
+      } else {
+        console.error("Bild nicht gefunden:", imagePath);
+        return res.status(404).json({
+          message: "Fahrzeugbild nicht gefunden.",
+        });
+      }
+      
+      // E-Mail-Optionen
+      const customerMailOptions = {
+        from: process.env.EMAIL,
+        to: email,
+        subject: "Reservierung storniert",
+        html: `
+          <div style="font-family: 'Arial', sans-serif; color: #333; max-width: 700px; margin: 40px auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+            
+            <!-- Header Section -->
+            <div style="background-color: #d9534f; color: white; text-align: center; padding: 30px 20px;">
+              <h1 style="margin: 0; font-size: 32px;">Reservierung storniert</h1>
+              <p style="margin: 10px 0 0; font-size: 18px;">Ihre Reservierung wurde erfolgreich storniert</p>
+            </div>
+      
+            <!-- Body Section -->
+            <div style="padding: 40px;">
+              <p style="font-size: 20px; margin-bottom: 30px; color: #555;">Sehr geehrte/r <strong>${reservation.vorname} ${reservation.nachname}</strong>,</p>
+              
+              <p style="font-size: 16px; line-height: 1.8; color: #666;">
+                Wir bedauern, Ihnen mitteilen zu müssen, dass Ihre Reservierung für das Fahrzeug 
+                <strong>${reservation.carRent.carName}</strong> am 
+                <strong>${formattedPickupDate}</strong> um <strong>${formattedPickupTime}</strong> storniert wurde. 
+                Bitte kontaktieren Sie uns, falls Sie Fragen haben.
+              </p>
+      
+              <h2 style="color: #333; margin-top: 40px; padding-bottom: 12px; border-bottom: 2px solid #eee;">
+                Details der Reservierung:
+              </h2>
+              <ul style="list-style: none; padding: 0; font-size: 16px;">
+                <li style="padding: 12px 0;"><strong>🚗 Fahrzeug:</strong> ${reservation.carRent.carName}</li>
+                <li style="padding: 12px 0;"><strong>📅 Abholdatum:</strong> ${formattedPickupDate} um ${formattedPickupTime}</li>
+                <li style="padding: 12px 0;"><strong>📅 Rückgabedatum:</strong> ${formattedReturnDate} um ${formattedReturnTime}</li>
+                <li style="padding: 12px 0;"><strong>💰 Gesamtpreis:</strong> ${reservation.gesamtPrice} €</li>
+              </ul>
+      
+              <div style="text-align: center; margin: 40px 0;">
+                <img src="data:image/webp;base64,${base64Image}" alt="Fahrzeugbild"
+                     style="max-width: 280px; height: auto; border-radius: 10px; pointer-events: none; user-select: none; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);"/>
+                <p style="font-size: 14px; color: #888;">Ihr reserviertes Fahrzeug</p>
+              </div>
+            </div>
+      
+            <!-- Footer Section -->
+            <div style="background-color: #f5f5f5; text-align: center; padding: 20px;">
+              <p style="font-size: 15px; color: #777; margin: 0;">Falls Sie Fragen haben, kontaktieren Sie uns unter</p>
+              <a href="mailto:autoservice.aundo@gmail.com" style="color: #d9534f; font-size: 16px; text-decoration: none;">autoservice.aundo@gmail.com</a>
+              <p style="margin-top: 20px; font-size: 14px; color: #999;">© 2024 A&O . Alle Rechte vorbehalten.</p>
+            </div>
+          </div>
+        `,
+      };
+      
+    try {
+      await transporter.sendMail(customerMailOptions);
+    } catch (emailError) {
+      console.error("Fehler beim Versenden der E-Mail:", emailError);
+      return res.status(500).json({
+        message: "Reservierung storniert, aber E-Mail-Versand fehlgeschlagen.",
+      });
+    }
+    await Reservation.findByIdAndDelete(reservationId);
+    res.status(200).json({ message: "Reservierung erfolgreich storniert" });
+  } catch (error) {
+    console.error("Fehler bei der Ablehnung:", error);
+    res.status(500);
   }
 });

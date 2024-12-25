@@ -1,5 +1,5 @@
 import express from "express"
-import { createReservation ,getAllReservation,updateReservationStatus,rejectReservation} from "../controller/reservationController.js"
+import { createReservation ,getAllReservation,updateReservationStatus,rejectReservation, rejectReservationByAdmin} from "../controller/reservationController.js"
 
 
 
@@ -11,6 +11,7 @@ reservationRouter.get("/get-reservation",getAllReservation)
 reservationRouter.post("/create",createReservation)
 reservationRouter.put("/update-status/:reservationId", updateReservationStatus);
 reservationRouter.get("/reject-reservation/:reservationId", rejectReservation);
+reservationRouter.post("/reject" ,rejectReservationByAdmin)
  
 
 

@@ -5,7 +5,7 @@ import { sendVerificationLinkToEmail } from "../email/mailSender.js";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcrypt";
-import { checkAdmin } from "../middleware/validator/checkAdmin.js";
+
 
 
 export const generateUniqueCustomerNumber = async () => {

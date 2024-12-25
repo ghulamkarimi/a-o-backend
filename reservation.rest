@@ -1,2 +1,13 @@
 #### get  reservation
 GET http://localhost:7001/reservation/get-reservation
+
+
+#### reject reservationby admin
+POST http://localhost:7001/reservation/reject
+Content-Type: application/json
+
+{
+    "reservationId": "676c5c83235f38f01fcd7cb7",
+    "email": "karimiamirhossein12@gmail.com",
+    "userId": "67652d7ee380fb4136b7268f"
+}
