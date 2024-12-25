@@ -1,11 +1,11 @@
 import asyncHandler from "express-async-handler";
 import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
-import { jwtDecode } from "jwt-decode";
 import { sendVerificationLinkToEmail } from "../email/mailSender.js";
 import fs from "fs";
 import path from "path";
 import bcrypt from "bcrypt";
+import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 
 
 export const generateUniqueCustomerNumber = async () => {
@@ -159,8 +159,6 @@ export const accessTokenExpired = asyncHandler(async (req, res) => {
 });
 
 
-
-
 export const getAllUsers = asyncHandler(async (req, res) => {
   try {
     const users = await User.find();
@@ -219,6 +217,9 @@ export const changePasswordByLoginUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid credentials");
   }
 });
+
+ 
+ 
 
 export const deleteAccount = asyncHandler(async (req, res) => {
   const userId = req.userId; // Authentifizierter Benutzer
