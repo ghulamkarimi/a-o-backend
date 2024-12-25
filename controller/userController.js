@@ -221,28 +221,34 @@ export const changePasswordByLoginUser = asyncHandler(async (req, res) => {
 });
 
 export const deleteAccount = asyncHandler(async (req, res) => {
-  const userId = req.userId;
+  const userId = req.userId; // Authentifizierter Benutzer
+  const { targetUserId } = req.params; // Zielbenutzer-ID aus den Parametern
 
   if (!userId) {
     return res.status(401).json({ message: "Authentifizierung erforderlich." });
   }
+
   try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Benutzer nicht gefunden." });
+    const loginUser = await User.findById(userId); // Überprüfen, ob der authentifizierte Benutzer existiert
+    if (!loginUser) {
+      return res.status(404).json({ message: "Authentifizierter Benutzer nicht gefunden." });
     }
 
-    // Profilbild löschen, falls vorhanden
-    if (
-      user.profile_photo &&
-      !user.profile_photo.includes("default_avatar_url")
-    ) {
-      const relativePath = user.profile_photo.split(
-        `${req.protocol}://${req.get("host")}/`
-      )[1];
+    // Prüfen, ob der Benutzer Admin ist oder versucht, sein eigenes Konto zu löschen
+    if (!loginUser.isAdmin && userId.toString() !== targetUserId) {
+      return res.status(403).json({ message: "Keine Berechtigung, diesen Vorgang durchzuführen." });
+    }
+
+    const targetUser = await User.findById(targetUserId); // Zielbenutzer finden
+    if (!targetUser) {
+      return res.status(404).json({ message: "Zielbenutzer nicht gefunden." });
+    }
+
+    // Profilbild löschen, wenn es nicht das Standardbild ist
+    if (targetUser.profile_photo && !targetUser.profile_photo.includes("default_avatar_url")) {
+      const relativePath = targetUser.profile_photo.split(`${req.protocol}://${req.get("host")}/`)[1];
       if (relativePath) {
         const filePath = path.join(process.cwd(), relativePath);
-
         fs.unlink(filePath, (err) => {
           if (err) {
             console.error("Fehler beim Löschen des Profilbildes:", err.message);
@@ -253,27 +259,15 @@ export const deleteAccount = asyncHandler(async (req, res) => {
       }
     }
 
-    // Benutzerkonto löschen
-    await User.findByIdAndDelete(userId);
+    // Zielbenutzer löschen
+    await User.findByIdAndDelete(targetUserId);
 
-    // Cookies entfernen
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/", // Gleicher Pfad wie beim Setzen des Cookies
-    });
 
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/refresh", // Gleicher Pfad wie beim Setzen des Cookies
-    });
+
+
 
     res.status(200).json({
-      message:
-        "Ihr Konto wurde erfolgreich gelöscht. Alle zugehörigen Daten wurden entfernt.",
+      message: "Das Konto wurde erfolgreich gelöscht. Alle zugehörigen Daten wurden entfernt.",
     });
   } catch (error) {
     console.error("Fehler beim Löschen des Kontos:", error.message);
