@@ -18,63 +18,72 @@ export const getCarRentById = asyncHandler(async (req, res) => {
 });
 
 export const createCarRent = asyncHandler(async (req, res) => {
-  const {
-    carName,
-    carPrice,
-    carAC,
-    carDoors,
-    carPeople,
-    carGear,
-    isBooked,
-    userId,
-    bookedSlots,
-  } = req.body;
 
   try {
+    const {
+      carName,
+      carPrice,
+      carAC,
+      carDoors,
+      carPeople,
+      carGear,
+      isBooked,
+      userId,
+      bookedSlots,
+    } = req.body;
+  
+    const BASE_URL = process.env.BASE_URL || `${process.env.BASE_URL }`;
+    const imageUrl = `${BASE_URL}/${req.file.path.replace(/\\/g, '/')}`;
+    console.log(req.file);
 
-    const rentalDays = bookedSlots.reduce((totalDays, slot) => {
+    if (!imageUrl) {
+      throw new Error("Autobild ist erforderlich.");
+    }
+
+    // Admin-Prüfung
+    const user = await checkAdmin(userId);
+    if (!user) {
+      throw new Error("Benutzer nicht gefunden oder keine Admin-Rechte.");
+    }
+
+    // Miettage berechnen
+    const rentalDays = bookedSlots?.reduce((totalDays, slot) => {
       const startDate = new Date(slot.start);
       const endDate = new Date(slot.end);
       const diffInTime = endDate.getTime() - startDate.getTime();
-      const diffInDays = diffInTime / (1000 * 3600 * 24); 
+      const diffInDays = diffInTime / (1000 * 3600 * 24);
       return totalDays + diffInDays;
-    }, 0);
+    }, 0) || 1;
 
-    const totalPrice = rentalDays * parseFloat(carPrice); 
+    const totalPrice = rentalDays * parseFloat(carPrice);
 
-    if (rentalDays < 1) {
-      rentalDays = 1;
-     
-    }
-    const user = await checkAdmin(userId);
-    console.log("userid",userId)
-    const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5001}`;
-    const imageUrl = req.files.carImages.map((file) =>
-      `${BASE_URL}/${file.path.replace(/\\/g, '/')}` 
-    );
-   
     const carRent = new CarRent({
       carName,
       carAC,
       carPrice,
       carDoors,
       carPeople,
-      carPrice,
-      carImages: imageUrl,
       carGear,
       isBooked,
       carImage: imageUrl,
       user: user._id,
-      bookedSlots,
+      bookedSlots: bookedSlots || [],
       totalPrice,
     });
+
     const createdCarRent = await carRent.save();
-    res.status(201).json(createdCarRent);
+    res.status(201).json({
+      message: "Fahrzeug erfolgreich erstellt.",
+      car: createdCarRent,
+    });
   } catch (error) {
-    console.log("Error in createCarRent", error.message);
-    res.status(400);
+    console.error("Error in createCarRent:", error.message);
+    res.status(400).json({
+      message: error.message || "Fehler beim Erstellen des Fahrzeugs.",
+    });
   }
 });
+
 
 export const deleteCarRent = asyncHandler(async (req, res) => {
   const userId = req.body.userId;

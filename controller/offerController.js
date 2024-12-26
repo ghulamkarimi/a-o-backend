@@ -16,7 +16,7 @@ export const createOffer = asyncHandler(async (req, res) => {
             throw new Error("Invalid user");
         }
 
-        const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 7001}`;
+        const BASE_URL = process.env.BASE_URL || `${process.env.BASE_URL }`;
         const imageUrl = `${BASE_URL}/${req.file.path.replace(/\\/g, '/')}`;
 
         // Neues Angebot erstellen
@@ -75,7 +75,7 @@ export const editOffer = asyncHandler(async (req, res) => {
 
         // Wenn ein neues Bild hochgeladen wurde, lösche das alte Bild
         if (req.file) {
-            const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 7001}`;
+            const BASE_URL = process.env.BASE_URL || `${process.env.BASE_URL }`;
             const newImageUrl = `${BASE_URL}/${req.file.path.replace(/\\/g, '/')}`;
 
             // Lösche das alte Bild, wenn es existiert
@@ -144,7 +144,7 @@ export const deleteOffer = asyncHandler(async (req, res) => {
 
         // Lösche das Bild, falls es existiert
         if (offer.imageUrl) {
-            const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 7001}`;
+            const BASE_URL = process.env.BASE_URL || `${process.env.BASE_URL }`;
             const imagePath = path.join(process.cwd(), offer.imageUrl.replace(BASE_URL, ''));
             if (fs.existsSync(imagePath)) {
                 fs.unlinkSync(imagePath);
