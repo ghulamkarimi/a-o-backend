@@ -2,7 +2,7 @@ import Appointment from "../models/appointmentModel.js";
 import asyncHandler from "express-async-handler";
 import { appointmentConfirmationEmail,sendSimpleCancellationEmail } from "../email/mailSender.js";
 import dotenv from "dotenv";
-import { Socket } from "socket.io";
+
 
 
 dotenv.config();
