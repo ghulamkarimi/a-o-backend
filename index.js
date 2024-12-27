@@ -39,9 +39,10 @@ app.use(compression());
 app.use(cookieParser());
 
 const allowedOrigins =
-  process.env.NODE_ENV === "production"
-    ? ["https://ghulam-dev.me"]
+process.env.NODE_ENV === "production"
+    ? ["https://car-db.aundoautoservice.de", "https://www.aundoautoservice.de", "https://admin.aundoautoservice.de"]
     : ["http://localhost:3000", "http://localhost:5173"];
+
 
     app.use(
       cors({
