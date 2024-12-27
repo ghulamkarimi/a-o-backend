@@ -8,7 +8,7 @@ carRentRouter.post("/create",upload.single("carImage"),createCarRent);
 carRentRouter.get("/getRents", getCarRents);
 carRentRouter.get("/getRent/:id", getCarRentById);
 carRentRouter.delete("/deleteRentCar", deleteCarRent);
-carRentRouter.put("/updateRentCar", updateCarRent);
+carRentRouter.put("/updateRentCar",upload.single("carImage"), updateCarRent);
 carRentRouter.get("/getRentByUser", getCarRentByUser);
 
 

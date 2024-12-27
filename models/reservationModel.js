@@ -12,6 +12,11 @@ const reservationSchema = mongoose.Schema(
       ref: "User", 
       required: false, 
     },
+    scutzPacket:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "SchutzPacket",
+      required: false,
+    },
     vorname: {
       type: String,
       required: true,

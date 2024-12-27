@@ -83,8 +83,9 @@ export const createReservation = asyncHandler(async (req, res) => {
     newReservation.reservierungStatus = "completed";
     await newReservation.save();
 
-    const pickupDateTime = new Date(newReservation.pickupDate);
-    const returnDateTime = new Date(newReservation.returnDate);
+    const pickupDateTime = new Date(`${pickupDate.split('T')[0]}T${pickupTime.split(' ')[0]}:00Z`);
+    const returnDateTime = new Date(`${returnDate.split('T')[0]}T${returnTime.split(' ')[0]}:00Z`);
+
 
     // Gebuchte Slots aktualisieren
     carRent.bookedSlots = carRent.bookedSlots || [];

@@ -36,12 +36,18 @@ export const userRegister = asyncHandler(async (req, res) => {
     confirmPassword,
     phone,
   } = req.body;
-  const userExist = await User.findOne({ email });
 
   try {
-    if (userExist) throw new Error("User Already Exist");
-    if (password !== confirmPassword)
-      throw new Error("Password does not match");
+    const userExist = await User.findOne({ email });
+
+    if (userExist) {
+      return res.status(409).json({ message: "Diese E-Mail-Adresse wird bereits verwendet." });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Die Passwörter stimmen nicht überein." });
+    }
+
     const customerNumber = await generateUniqueCustomerNumber();
     const user = await User.create({
       firstName,
@@ -52,13 +58,15 @@ export const userRegister = asyncHandler(async (req, res) => {
       isAdmin,
       customerNumber,
     });
-    res.json({
-      user: user,
-      message: "User Registered Successfully",
+    
+    res.status(201).json({
+      user,
+      message: "Benutzer erfolgreich registriert.",
     });
+
   } catch (error) {
-    console.log(error, "error in userRegister");
-    res.json(error);
+    console.error("Fehler bei der Registrierung:", error);
+    res.status(500).json({ message: "Interner Serverfehler" });
   }
 });
 

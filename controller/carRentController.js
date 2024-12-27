@@ -2,6 +2,8 @@ import asyncHandler from "express-async-handler";
 import CarRent from "../models/carRentModel.js";
 import { checkAdmin } from "../middleware/validator/checkAdmin.js";
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 
 export const getCarRents = asyncHandler(async (req, res) => {
   const carRents = await CarRent.find();
@@ -18,7 +20,6 @@ export const getCarRentById = asyncHandler(async (req, res) => {
 });
 
 export const createCarRent = asyncHandler(async (req, res) => {
-
   try {
     const {
       carName,
@@ -31,9 +32,9 @@ export const createCarRent = asyncHandler(async (req, res) => {
       userId,
       bookedSlots,
     } = req.body;
-  
-    const BASE_URL = process.env.BASE_URL || `${process.env.BASE_URL }`;
-    const imageUrl = `${BASE_URL}/${req.file.path.replace(/\\/g, '/')}`;
+
+    const BASE_URL = process.env.BASE_URL || `${process.env.BASE_URL}`;
+    const imageUrl = `${BASE_URL}/${req.file.path.replace(/\\/g, "/")}`;
     console.log(req.file);
 
     if (!imageUrl) {
@@ -47,13 +48,14 @@ export const createCarRent = asyncHandler(async (req, res) => {
     }
 
     // Miettage berechnen
-    const rentalDays = bookedSlots?.reduce((totalDays, slot) => {
-      const startDate = new Date(slot.start);
-      const endDate = new Date(slot.end);
-      const diffInTime = endDate.getTime() - startDate.getTime();
-      const diffInDays = diffInTime / (1000 * 3600 * 24);
-      return totalDays + diffInDays;
-    }, 0) || 1;
+    const rentalDays =
+      bookedSlots?.reduce((totalDays, slot) => {
+        const startDate = new Date(slot.start);
+        const endDate = new Date(slot.end);
+        const diffInTime = endDate.getTime() - startDate.getTime();
+        const diffInDays = diffInTime / (1000 * 3600 * 24);
+        return totalDays + diffInDays;
+      }, 0) || 1;
 
     const totalPrice = rentalDays * parseFloat(carPrice);
 
@@ -84,17 +86,16 @@ export const createCarRent = asyncHandler(async (req, res) => {
   }
 });
 
-
 export const deleteCarRent = asyncHandler(async (req, res) => {
   const userId = req.body.userId;
   console.log(userId);
-  const CarId = req.body.CarId;
-  console.log(CarId);
+  const carId = req.body.carId;
+  console.log(carId);
   if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
     res.status(400).json({ message: "Invalid User Id" });
     return;
   }
-  if (!CarId || !mongoose.Types.ObjectId.isValid(CarId)) {
+  if (!carId || !mongoose.Types.ObjectId.isValid(carId)) {
     res.status(400).json({ message: "Invalid Car Id" });
     return;
   }
@@ -104,7 +105,7 @@ export const deleteCarRent = asyncHandler(async (req, res) => {
       res.status(400).json({ message: "Invalid User" });
       return;
     }
-    const carRent = await CarRent.findByIdAndDelete(CarId);
+    const carRent = await CarRent.findByIdAndDelete(carId);
     if (!carRent) {
       res.status(404).json({ message: "Car Rent not found" });
       return;
@@ -154,13 +155,35 @@ export const updateCarRent = asyncHandler(async (req, res) => {
     }
     carRent.carName = carName || carRent.carName;
     carRent.carPrice = carPrice || carRent.carPrice;
-    carRent.carImage = carImage || carRent.carImage;
     carRent.carAC = carAC !== undefined ? carAC : carRent.carAC;
     carRent.carDoors = carDoors || carRent.carDoors;
     carRent.carPeople = carPeople || carRent.carPeople;
     carRent.carGear = carGear || carRent.carGear;
     carRent.isBooked = isBooked !== undefined ? isBooked : carRent.isBooked;
+
+    if (req.file) {
+      const BASE_URL = process.env.BASE_URL || `${process.env.BASE_URL}`;
+      const newImageUrl = `${BASE_URL}/${req.file.path.replace(/\\/g, "/")}`;
+
+      // Delete old image
+      if (carRent.carImage) {
+        const oldImagePath = path.join(
+          process.cwd(),
+          carRent.carImage.replace(BASE_URL, "")
+        );
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+          console.log(`Deleted old image: ${oldImagePath}`);
+        }
+        
+      }
+
+      carRent.carImage = newImageUrl;
+    } else {
+      carRent.carImage = req.body.carImage || carRent.carImage;
+    }
     const updatedCarRent = await carRent.save();
+
     res.json(updatedCarRent);
   } catch (error) {
     console.log("Error in updateCarRent", error.message);

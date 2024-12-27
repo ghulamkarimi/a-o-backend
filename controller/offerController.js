@@ -42,7 +42,7 @@ export const createOffer = asyncHandler(async (req, res) => {
 
 export const editOffer = asyncHandler(async (req, res) => {
     const { title, description, oldPrice, newPrice, imageUrl, userId, offerId, discountPercentage } = req.body;
-    console.log("Received data:", { title, description, oldPrice, newPrice, imageUrl, userId, offerId, discountPercentage });
+
 
     if (!offerId) {
         res.status(400);
@@ -108,12 +108,6 @@ export const getOffers = asyncHandler(async (req, res) => {
     const offers = await Offer.find();
     res.json(offers);
 });
-
-
-
-
-
-
 
 export const deleteOffer = asyncHandler(async (req, res) => {
     const { userId, offerId } = req.body;
