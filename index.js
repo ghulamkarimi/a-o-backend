@@ -40,7 +40,7 @@ app.use(cookieParser());
 
 const allowedOrigins =
 process.env.NODE_ENV === "production"
-    ? ["https://car-db.aundoautoservice.de", "https://www.aundoautoservice.de", "https://admin.aundoautoservice.de"]
+    ? ["https://car-db.aundoautoservice.de","https://aundoautoservice.de" ,"https://www.aundoautoservice.de", "https://admin.aundoautoservice.de"]
    : []
     app.use(
       cors({
