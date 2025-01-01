@@ -47,7 +47,7 @@ export const createBuyCar = asyncHandler(async (req, res) => {
     const carIdentificationNumber = await generateUniqueDigitRandomNumber();
     const user = await checkAdmin(userId); // Überprüfe Adminrechte
  // Base URL für Bildpfade
- const BASE_URL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 7001}`;
+ const BASE_URL = process.env.BASE_URL || `https://${process.env.PORT || 7004}`;
 
  // Datei-URLs aus `req.files` extrahieren
  const imageUrls = req.files.carImages.map((file) =>
