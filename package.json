@@ -5,7 +5,7 @@
   "description": "",
   "main": "index.js",
 "scripts": {
-  "dev": "nodemon src/index.js",
+  "dev": "nodemon index.js",
   "start": "node src/index.js",
   "setup": "npm i && pm2 start --name car-db npm -- start --update-env --time && pm2 save",
   "deploy": "git pull --no-rebase && pm2 restart car-db --update-env --time && pm2 save"

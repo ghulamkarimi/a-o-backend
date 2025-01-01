@@ -413,7 +413,7 @@ export const profilePhotoUpload = asyncHandler(async (req, res) => {
   }
 
   // Generiere den vollständigen Dateipfad
-  const filePath = `${req.protocol}://${req.get(
+  const filePath = `https://${req.protocol}://${req.get(
     "host"
   )}/${req.file.path.replace(/\\/g, "/")}`;
 
