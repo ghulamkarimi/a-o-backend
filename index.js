@@ -33,8 +33,8 @@ app.use((req, res, next) => {
 });
 
 // Middleware setup
-app.use(express.json({ limit: "20mb" })); // Erhöht die maximale JSON-Größe
-app.use(express.urlencoded({ extended: true, limit: "20mb" })); // Für große Formulardaten
+app.use(express.json({ limit: "100mb" })); // Erhöht die maximale JSON-Größe
+app.use(express.urlencoded({ extended: true, limit: "100mb" })); // Für große Formulardaten
 app.use(compression());
 app.use(cookieParser());
 
